@@ -3,7 +3,10 @@
 }
 @* @model List<User> *@
 
-<a asp-action="Create" class="btn btn-primary">Create User</a>
+@* <a asp-action="Create" class="btn btn-primary">Create User</a> *@
+<a asp-controller="Home" asp-action="Privacy" class="btn btn-primary">Privacyへ</a>
+<a asp-action="Detail" asp-route-id="5">Detail 5へ</a>
+
 
 <h1>User List</h1>
 <ul>
