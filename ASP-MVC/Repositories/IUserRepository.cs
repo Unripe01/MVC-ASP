@@ -4,6 +4,7 @@ namespace ASP_MVC.Repositories
 {
     public interface IUserRepository
     {
-        public List<User> GetAll();
+        List<User> GetAll();
+        void Add(User user);
     }
 }

@@ -30,6 +30,7 @@ namespace ASP_MVC.Controllers
         [HttpPost]
         public IActionResult Create(User user)
         {
+            _userRepository.Add(user);
             return RedirectToAction("Index");
         }
 
@@ -37,9 +38,6 @@ namespace ASP_MVC.Controllers
         {
             return View();
         }
-
-
-
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
