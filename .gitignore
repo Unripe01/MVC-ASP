@@ -1,0 +1,15 @@
+.vs/
+
+bin/
+obj/
+
+*.user
+*.suo
+
+ASP-MVC.csproj.user
+
+*.db
+*.db-shm
+*.db-wal
+
+.codex
