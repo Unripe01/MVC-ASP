@@ -4,9 +4,7 @@
 @* @model List<User> *@
 
 @* <a asp-action="Create" class="btn btn-primary">Create User</a> *@
-<a asp-controller="Home" asp-action="Privacy" class="btn btn-primary">Privacyへ</a>
-<a asp-action="Detail" asp-route-id="5">Detail 5へ</a>
-
+<a asp-controller="Home" asp-action="Create" class="btn btn-primary">登録</a>
 
 <h1>User List</h1>
 <ul>
@@ -18,3 +16,4 @@
 
 <h2>@ViewBag.Message</h2>
 
+<a asp-action="Detail" asp-route-id="5">Detail 5へ</a>
