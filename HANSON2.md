@@ -221,6 +221,81 @@ Home 基準線を保ったまま、ハンズオン2用の入口（User）へ責�
 4. ViewModelを使って同一Viewを再描画する。
 5. 更新系（登録/編集）がある場合は PRG を徹底する。
 
+### PRGおさらい（F5が理解の鍵）
+
+PRG は Post Redirect Get の略。
+本質は「更新処理の結果画面を POST のまま残さない」こと。
+
+#### PRGなし（危険）
+
+1. GET /User/Create でフォーム表示
+2. POST /User/Create で保存
+3. そのまま return View("Complete") を返す
+
+この状態でブラウザが保持しているのは「POST結果画面」。
+そのため F5 / 再読み込み / 戻る→進む でフォーム再送信確認が出る。
+ユーザーが続行すると POST が再実行され、二重登録の原因になる。
+
+```text
+POST /Create
+  ↓
+画面表示
+  ↓
+F5
+  ↓
+POST再送
+  ↓
+二重登録
+```
+
+#### PRGあり（推奨）
+
+1. GET /User/Create でフォーム表示
+2. POST /User/Create で保存
+3. return RedirectToAction("Index") を返す
+4. ブラウザが GET /User/Index を自動実行
+
+最終表示が GET 結果になるため、F5で再実行されるのは GET のみ。
+POST再送事故を避けられる。
+
+```text
+POST /Create
+  ↓
+Redirect
+  ↓
+GET /Index
+  ↓
+F5
+  ↓
+GET再実行だけ
+```
+
+#### 悪い例 / 良い例
+
+```csharp
+[HttpPost]
+public IActionResult Create(User vm)
+{
+    _service.Save(vm);
+    return View("Index");
+}
+```
+
+```csharp
+[HttpPost]
+public IActionResult Create(User vm)
+{
+    _service.Save(vm);
+    return RedirectToAction("Index");
+}
+```
+
+#### このSTEPでの確認タスク（PRG）
+
+1. あえて PRGなし実装を試し、F5で再送確認が出ることを観察する。
+2. PRGあり実装へ戻し、F5で再送確認が出ないことを確認する。
+3. 「なぜ安全になったか」を HTTP 観点で説明できるようにする。
+
 ### 実装時のルール
 
 - Controller は薄く保つ
