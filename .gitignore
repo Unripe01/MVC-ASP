@@ -1,5 +1,5 @@
-.vs/
 
+.vs/
 bin/
 obj/
 
@@ -13,3 +13,5 @@ ASP-MVC.csproj.user
 *.db-wal
 
 .codex
+app.db
+
