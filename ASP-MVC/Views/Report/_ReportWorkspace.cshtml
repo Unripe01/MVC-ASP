@@ -1,0 +1,149 @@
+@model UserFavoriteReportViewModel
+
+<div id="reportWorkspace" class="report-grid">
+    <section class="report-input-panel">
+        <div class="section-heading">
+            <p class="eyebrow">Definition Driven</p>
+            <h1>ユーザー好きなもの帳票</h1>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Message))
+        {
+            <div class="alert alert-success" role="status">@Model.Message</div>
+        }
+
+        <form id="reportForm"
+              hx-post="@Url.Action("SaveUserFavorite", "Report")"
+              hx-target="#reportWorkspace"
+              hx-swap="outerHTML">
+            <input type="hidden" name="UserId" value="@Model.UserId" />
+
+            <div class="field-stack">
+                @foreach (var field in Model.Fields)
+                {
+                    <div class="report-field" id="field-@field.FieldId" data-property-path="@field.PropertyPath">
+                        <div class="field-label-row">
+                            <label class="form-label" for="@field.FieldId">@field.Label</label>
+                            <div class="field-badges">
+                                @if (field.IsFromMaster)
+                                {
+                                    <span>Master</span>
+                                }
+                                @if (field.AllowReverseReflection)
+                                {
+                                    <span>Reverse</span>
+                                }
+                            </div>
+                        </div>
+
+                        @if (field.IsCollection)
+                        {
+                            var values = field.Values.Any() ? field.Values : new[] { "" };
+
+                            <div x-data="{ extraRows: [] }" class="collection-field">
+                                @foreach (var value in values)
+                                {
+                                    <div class="collection-row">
+                                        <input class="form-control"
+                                               name="@field.InputName"
+                                               value="@value"
+                                               autocomplete="off"
+                                               hx-post="@Url.Action("PreviewUserFavorite", "Report")"
+                                               hx-target="#previewRegion"
+                                               hx-swap="outerHTML"
+                                               hx-include="#reportForm"
+                                               hx-trigger="change" />
+                                             <button type="button" class="btn btn-outline-secondary" x-on:click="$el.parentElement.remove()">削除</button>
+                                    </div>
+                                }
+
+                                <template x-for="row in extraRows" :key="row">
+                                    <div class="collection-row">
+                                        <input class="form-control"
+                                               name="@field.InputName"
+                                               autocomplete="off"
+                                               hx-post="@Url.Action("PreviewUserFavorite", "Report")"
+                                               hx-target="#previewRegion"
+                                               hx-swap="outerHTML"
+                                               hx-include="#reportForm"
+                                               hx-trigger="change" />
+                                        <button type="button" class="btn btn-outline-secondary" x-on:click="extraRows = extraRows.filter(value => value !== row)">削除</button>
+                                    </div>
+                                </template>
+
+                                <button type="button" class="btn btn-sm btn-outline-primary" x-on:click="extraRows.push(Date.now().toString() + extraRows.length)">追加</button>
+                            </div>
+                        }
+                        else if (field.Options.Any())
+                        {
+                            <div class="master-field-row">
+                                <select id="@field.FieldId"
+                                        class="form-select"
+                                        name="@field.InputName"
+                                        hx-post="@Url.Action("PreviewUserFavorite", "Report")"
+                                        hx-target="#previewRegion"
+                                        hx-swap="outerHTML"
+                                        hx-include="#reportForm"
+                                        hx-trigger="change">
+                                    @foreach (var option in field.Options)
+                                    {
+                                        <option value="@option.Value" selected="@option.Selected">@option.Text</option>
+                                    }
+                                </select>
+
+                                @if (!string.IsNullOrWhiteSpace(field.DialogUrl))
+                                {
+                                    <button type="button"
+                                            class="btn btn-outline-primary"
+                                            hx-get="@field.DialogUrl"
+                                            hx-target="#modalRegion"
+                                            hx-include="#reportForm"
+                                            x-on:click="modalOpen = true">
+                                        編集
+                                    </button>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <input id="@field.FieldId"
+                                   class="form-control"
+                                   name="@field.InputName"
+                                   value="@field.Value"
+                                   autocomplete="off"
+                                   hx-post="@Url.Action("PreviewUserFavorite", "Report")"
+                                   hx-target="#previewRegion"
+                                   hx-swap="outerHTML"
+                                   hx-include="#reportForm"
+                                   hx-trigger="change" />
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">XML保存</button>
+            </div>
+        </form>
+
+        <form hx-post="@Url.Action("ExportUserFavorite", "Report")"
+              hx-target="#reportWorkspace"
+              hx-swap="outerHTML"
+              class="export-form">
+            <input type="hidden" name="userId" value="@Model.UserId" />
+            <button type="submit" class="btn btn-outline-dark">txt出力</button>
+        </form>
+    </section>
+
+    <aside class="report-preview-column">
+        @await Html.PartialAsync("_ReportPreview", new ReportPreviewViewModel { PreviewText = Model.PreviewText })
+
+        <div class="xml-panel">
+            <div class="section-heading">
+                <p class="eyebrow">XML Snapshot</p>
+                <h2>保存対象XML</h2>
+            </div>
+            <pre class="xml-text">@Model.XmlData</pre>
+        </div>
+    </aside>
+</div>

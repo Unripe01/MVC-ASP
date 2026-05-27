@@ -1,0 +1,22 @@
+@model UserFavoriteReportViewModel
+
+@{
+    ViewData["Title"] = "帳票PoC";
+}
+
+<div class="report-page"
+     x-data="{ modalOpen: false }"
+     x-on:report-modal-close.window="modalOpen = false">
+    <div id="reportWorkspace">
+        @await Html.PartialAsync("_ReportWorkspace", Model)
+    </div>
+
+    <div class="report-modal-backdrop"
+         x-cloak
+         x-show="modalOpen"
+         x-transition.opacity>
+        <div class="report-modal" x-on:click.outside="modalOpen = false">
+            <div id="modalRegion"></div>
+        </div>
+    </div>
+</div>

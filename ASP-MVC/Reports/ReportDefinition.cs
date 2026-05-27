@@ -1,0 +1,60 @@
+using System.Linq.Expressions;
+
+namespace ASP_MVC.Reports;
+
+/// <summary>
+/// Entityを帳票へ投影するField定義の基底クラス。
+/// </summary>
+public abstract class ReportDefinition<TModel>
+{
+    private readonly List<FieldDefinition> _fields = [];
+
+    protected ReportDefinition()
+    {
+        Configure();
+    }
+
+    public IReadOnlyList<FieldDefinition> Fields => _fields;
+
+    /// <summary>
+    /// 派生クラスが帳票のField構成を定義する。
+    /// </summary>
+    protected abstract void Configure();
+
+    /// <summary>
+    /// 型付きExpressionからPropertyPathと値取得関数を登録する。
+    /// </summary>
+    protected FieldDefinition Field<TValue>(Expression<Func<TModel, TValue>> expression)
+    {
+        var propertyPath = GetPropertyPath(expression.Body);
+        var field = new FieldDefinition<TModel, TValue>(propertyPath, expression.Compile());
+        _fields.Add(field);
+        return field;
+    }
+
+    private static string GetPropertyPath(Expression expression)
+    {
+        var members = new Stack<string>();
+        var currentExpression = RemoveConvertExpression(expression);
+
+        while (currentExpression is MemberExpression memberExpression)
+        {
+            members.Push(memberExpression.Member.Name);
+            currentExpression = RemoveConvertExpression(memberExpression.Expression);
+        }
+
+        if (members.Count == 0)
+        {
+            throw new InvalidOperationException("Fieldにはプロパティ参照を指定してください。");
+        }
+
+        return string.Join(".", members);
+    }
+
+    private static Expression? RemoveConvertExpression(Expression? expression)
+    {
+        return expression is UnaryExpression unaryExpression
+            ? unaryExpression.Operand
+            : expression;
+    }
+}

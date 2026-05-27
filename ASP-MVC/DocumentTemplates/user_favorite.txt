@@ -1,0 +1,3 @@
+企業：{{Company.CompanyName}}
+おなまえ：{{User.UserName}}
+好きなものリスト：{{Favorite.FavoriteName}}

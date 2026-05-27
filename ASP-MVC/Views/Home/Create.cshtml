@@ -3,6 +3,7 @@
 <h1>User Create</h1>
 
 <form method="post">
-    <input  asp-for="Name" name="Name">
+    <input type="hidden" asp-for="CompanyId" value="1">
+    <input asp-for="UserName" name="UserName">
     <button type="submit">登録</button>
 </form>

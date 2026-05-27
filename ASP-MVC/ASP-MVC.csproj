@@ -12,4 +12,43 @@
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Entities\Company.cs" />
+    <Compile Update="Entities\Favorite.cs" />
+    <Compile Update="Entities\ReportInstance.cs" />
+    <Compile Update="Entities\User.cs" />
+    <Compile Update="Controllers\ReportController.cs" />
+    <Compile Update="Repository\CompanyRepository.cs" />
+    <Compile Update="Repository\FavoriteRepository.cs" />
+    <Compile Update="Repository\ICompanyRepository.cs" />
+    <Compile Update="Repository\IFavoriteRepository.cs" />
+    <Compile Update="Repository\IReportInstanceRepository.cs" />
+    <Compile Update="Repository\IUserRepository.cs" />
+    <Compile Update="Repository\ReportInstanceRepository.cs" />
+    <Compile Update="Repository\UserRepository.cs" />
+    <Compile Update="Reports\FavoriteResolver.cs" />
+    <Compile Update="Reports\FieldDefinition.cs" />
+    <Compile Update="Reports\FieldDefinitionOfT.cs" />
+    <Compile Update="Reports\ReportDefinition.cs" />
+    <Compile Update="Reports\UserFavoriteReportDefinition.cs" />
+    <Compile Update="Services\ReportEngine.cs" />
+    <Compile Update="Services\ReportRendererService.cs" />
+    <Compile Update="Services\ReportXmlService.cs" />
+    <Compile Update="Services\TemplateRenderService.cs" />
+    <Compile Update="Services\UserService.cs" />
+    <Compile Update="ViewModels\ReportFieldInputViewModel.cs" />
+    <Compile Update="ViewModels\ReportPreviewViewModel.cs" />
+    <Compile Update="ViewModels\ReportSelectOptionViewModel.cs" />
+    <Compile Update="ViewModels\CompanyDialogViewModel.cs" />
+    <Compile Update="ViewModels\UserFavoriteReportPostViewModel.cs" />
+    <Compile Update="ViewModels\UserFavoriteReportViewModel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Views\Report\UserFavorite.cshtml" />
+    <Content Update="Views\Report\_CompanyDialog.cshtml" />
+    <Content Update="Views\Report\_ReportPreview.cshtml" />
+    <Content Update="Views\Report\_ReportWorkspace.cshtml" />
+  </ItemGroup>
+
 </Project>

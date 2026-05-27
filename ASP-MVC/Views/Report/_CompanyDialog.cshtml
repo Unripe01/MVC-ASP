@@ -1,0 +1,28 @@
+@model CompanyDialogViewModel
+
+<div class="dialog-surface">
+    <div class="dialog-header">
+        <div>
+            <p class="eyebrow">Master</p>
+            <h2>会社マスター編集</h2>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" x-on:click="modalOpen = false">閉じる</button>
+    </div>
+
+    <form hx-post="@Url.Action("SaveCompanyDialog", "Report")"
+          hx-target="#reportWorkspace"
+          hx-swap="outerHTML">
+        <input type="hidden" asp-for="UserId" />
+        <input type="hidden" asp-for="CompanyId" />
+
+        <div class="mb-3">
+            <label asp-for="CompanyName" class="form-label">会社名</label>
+            <input asp-for="CompanyName" class="form-control" autocomplete="off" />
+        </div>
+
+        <div class="dialog-actions">
+            <button type="button" class="btn btn-outline-secondary" x-on:click="modalOpen = false">キャンセル</button>
+            <button type="submit" class="btn btn-primary">保存して戻る</button>
+        </div>
+    </form>
+</div>

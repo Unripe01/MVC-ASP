@@ -21,6 +21,150 @@ body {
   margin-bottom: 60px;
 }
 
+[x-cloak] {
+  display: none !important;
+}
+
+.report-page {
+  min-height: calc(100vh - 160px);
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.report-input-panel,
+.preview-panel,
+.xml-panel,
+.dialog-surface {
+  border: 1px solid #d8dee4;
+  border-radius: 8px;
+  background: #fff;
+  padding: 20px;
+}
+
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.section-heading h1,
+.section-heading h2,
+.dialog-header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: #57606a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.field-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.report-field {
+  border-bottom: 1px solid #eaeef2;
+  padding-bottom: 16px;
+}
+
+.field-label-row,
+.master-field-row,
+.collection-row,
+.form-actions,
+.dialog-header,
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.field-label-row,
+.dialog-header {
+  justify-content: space-between;
+}
+
+.field-badges {
+  display: flex;
+  gap: 6px;
+}
+
+.field-badges span {
+  border: 1px solid #d0d7de;
+  border-radius: 999px;
+  color: #57606a;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+}
+
+.collection-field {
+  display: grid;
+  gap: 10px;
+}
+
+.collection-row .form-control,
+.master-field-row .form-select {
+  flex: 1;
+}
+
+.form-actions,
+.export-form {
+  margin-top: 18px;
+}
+
+.report-preview-column {
+  display: grid;
+  gap: 16px;
+}
+
+.preview-text,
+.xml-text {
+  background: #f6f8fa;
+  border-radius: 6px;
+  margin: 0;
+  max-height: 360px;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
+.xml-text {
+  font-size: 0.8rem;
+}
+
+.report-modal-backdrop {
+  align-items: center;
+  background: rgba(31, 35, 40, 0.42);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 1050;
+}
+
+.report-modal {
+  max-width: 560px;
+  width: min(92vw, 560px);
+}
+
+.dialog-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;

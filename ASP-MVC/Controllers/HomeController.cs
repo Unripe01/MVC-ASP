@@ -1,7 +1,8 @@
 using System.Diagnostics;
+using ASP_MVC.Entities;
 using ASP_MVC.Models;
 using Microsoft.AspNetCore.Mvc;
-using ASP_MVC.Repositories;
+using ASP_MVC.Repository;
 
 namespace ASP_MVC.Controllers
 {
