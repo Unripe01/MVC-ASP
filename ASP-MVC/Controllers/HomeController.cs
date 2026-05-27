@@ -25,12 +25,19 @@ namespace ASP_MVC.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            return View();
+            return View(new User());
         }
 
         [HttpPost]
-        public IActionResult Create(User user)
+        public IActionResult Create(User? user)
         {
+            if (user is null || string.IsNullOrWhiteSpace(user.UserName))
+            {
+                ModelState.AddModelError("UserName", "名前を入力してください。");
+                return View(user ?? new User());
+            }
+
+            user.UserName = user.UserName.Trim();
             _userRepository.Add(user);
             return RedirectToAction("Index");
         }

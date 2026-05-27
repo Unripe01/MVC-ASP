@@ -76,3 +76,137 @@
 5. 差分が小さいか
 
 差分量は最下位。
+
+---
+
+# Documentation Policy
+
+このPoCでは、コードとドキュメントを同じ設計成果物として扱うこと。
+
+コード変更によって次のいずれかが変わる場合は、同じ作業で関連Markdownも更新する。
+
+- フォルダ責務
+- Entity構造
+- DBテーブル構造
+- ReportDefinition / FieldDefinition のAPI
+- Service責務
+- Controller endpoint
+- htmx target / swap境界
+- Alpine.jsが持つUI状態
+- XML Snapshot仕様
+- txtテンプレート仕様
+- マスター取得 / 逆反映の流れ
+- 新しい帳票追加手順
+
+特に `ASP-MVC/Poc/TECHNICAL-SPEC.md` は、現在の実装仕様を表す一次資料として扱う。
+
+`ASP-MVC/Poc/PoC.md`、`ASP-MVC/Poc/マスターダイアログ思想.md`、`ASP-MVC/Poc/アウトライン.md` は思想・背景・設計判断の資料として扱い、実装仕様が変わった場合は必要に応じて整合させる。
+
+---
+
+# Key PoC Folders
+
+このPoCで重要なフォルダと責務は以下。
+
+## `ASP-MVC/Entities/`
+
+業務データそのもの。DB永続化対象。帳票Projectionの起点。
+
+禁止:
+
+- SQL
+- Dapper呼び出し
+- HTML
+- Validation表示
+- XML serialize
+- txt出力
+- ファイル書き込み
+
+## `ASP-MVC/Repository/`
+
+DBアクセス専用。DapperとSQLを書く場所。
+
+禁止:
+
+- HTML生成
+- 帳票定義
+- UI制御
+- XML serialize
+- txt出力
+
+## `ASP-MVC/Reports/`
+
+帳票定義を書く最重要フォルダ。
+
+ここでは「帳票を書く」のではなく、「Entityを帳票へ投影する定義を書く」。
+
+禁止:
+
+- SQL
+- Dapper呼び出し
+- HTML
+- htmx属性
+- DB接続
+- ファイル書き込み
+
+## `ASP-MVC/Services/`
+
+ReportDefinitionを回して、UI生成、XML、txt差し込み、マスター取得、逆反映、Validationを成立させる場所。
+
+禁止:
+
+- Razor HTML
+- htmx属性
+- Alpine.js状態
+- SQL直書き
+
+## `ASP-MVC/ViewModels/`
+
+Razor表示とPOST入力のためのモデル。
+
+禁止:
+
+- Dapper
+- SQL
+- Repository呼び出し
+- XML serialize
+- txt出力
+
+## `ASP-MVC/Views/Report/`
+
+帳票PoCのRazor View / PartialView。
+
+htmxは通信配線とPartial差し替えのみ、Alpine.jsはモーダル開閉と一時UI状態のみ担当する。
+
+Razorでは Alpine.js の `@click` 省略記法を使わず、必ず `x-on:click` を使うこと。
+
+## `ASP-MVC/DocumentTemplates/`
+
+txtテンプレート置き場。
+
+Mustache等は使わず、PoCでは単純文字列置換でよい。
+
+## `ASP-MVC/DocumentDownload/`
+
+txt出力結果の保存先。
+
+実行時生成物のため、検証で作成された不要ファイルはコミット対象にしない。
+
+## `ASP-MVC/Poc/`
+
+PoCの思想、技術仕様、設計ログを置く。
+
+コード変更で仕様が変わる場合は、このフォルダのMarkdownを確認し、必要なら更新する。
+
+---
+
+# Project File Policy
+
+.NETプロジェクトでファイルを新規作成した場合は、対応する `.csproj` へ明示登録すること。
+
+- `.cs`: `Compile`
+- `.cshtml`: `Content`
+- `.md`: `Content`
+- txtテンプレート: `Content`
+
+登録後は `dotnet build ASP-MVC/ASP-MVC.csproj` で確認する。

@@ -62,7 +62,10 @@ public class UserRepository : IUserRepository
     /// </summary>
     public void Add(User user)
     {
+        ArgumentNullException.ThrowIfNull(user);
+
         var companyId = user.CompanyId == 0 ? GetDefaultCompanyId() : user.CompanyId;
+        var userName = (user.UserName ?? "").Trim();
 
         const string sql = @"
             INSERT INTO Users (CompanyId, UserName)
@@ -72,9 +75,10 @@ public class UserRepository : IUserRepository
         user.Id = _connection.ExecuteScalar<int>(sql, new
         {
             CompanyId = companyId,
-            UserName = user.UserName
+            UserName = userName
         });
         user.CompanyId = companyId;
+        user.UserName = userName;
     }
 
     /// <summary>
@@ -82,13 +86,20 @@ public class UserRepository : IUserRepository
     /// </summary>
     public void Update(User user)
     {
+        ArgumentNullException.ThrowIfNull(user);
+
         const string sql = @"
             UPDATE Users
             SET CompanyId = @CompanyId,
                 UserName = @UserName
             WHERE Id = @Id;";
 
-        _connection.Execute(sql, user);
+        _connection.Execute(sql, new
+        {
+            user.Id,
+            user.CompanyId,
+            UserName = (user.UserName ?? "").Trim()
+        });
     }
 
     private int GetDefaultCompanyId()

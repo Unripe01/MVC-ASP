@@ -102,20 +102,43 @@ static void EnsureUsersTable(IDbConnection connection)
         return;
     }
 
-    if (!userColumns.Contains("CompanyId"))
+    if (userColumns.Contains("Name") || !userColumns.Contains("CompanyId") || !userColumns.Contains("UserName"))
     {
-        connection.Execute("ALTER TABLE Users ADD COLUMN CompanyId INTEGER NOT NULL DEFAULT 1;");
+        RebuildUsersTable(connection, userColumns);
     }
+}
 
-    if (!userColumns.Contains("UserName"))
-    {
-        connection.Execute("ALTER TABLE Users ADD COLUMN UserName TEXT NOT NULL DEFAULT '';");
-    }
+static void RebuildUsersTable(IDbConnection connection, IReadOnlySet<string> userColumns)
+{
+    var companyIdExpression = userColumns.Contains("CompanyId")
+        ? "CASE WHEN CompanyId IS NULL OR CompanyId = 0 THEN 1 ELSE CompanyId END"
+        : "1";
 
-    if (userColumns.Contains("Name"))
+    var userNameExpression = (userColumns.Contains("UserName"), userColumns.Contains("Name")) switch
     {
-        connection.Execute("UPDATE Users SET UserName = Name WHERE UserName = '' AND Name IS NOT NULL;");
-    }
+        (true, true) => "COALESCE(NULLIF(UserName, ''), Name, '')",
+        (true, false) => "COALESCE(UserName, '')",
+        (false, true) => "COALESCE(Name, '')",
+        _ => "''"
+    };
+
+    connection.Execute("DROP TABLE IF EXISTS Users_Migrated;");
+    connection.Execute(@"
+        CREATE TABLE Users_Migrated (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            CompanyId INTEGER NOT NULL,
+            UserName TEXT NOT NULL
+        );
+    ");
+
+    connection.Execute($@"
+        INSERT INTO Users_Migrated (Id, CompanyId, UserName)
+        SELECT Id, {companyIdExpression}, {userNameExpression}
+        FROM Users;
+    ");
+
+    connection.Execute("DROP TABLE Users;");
+    connection.Execute("ALTER TABLE Users_Migrated RENAME TO Users;");
 }
 
 static void SeedDatabase(IDbConnection connection)

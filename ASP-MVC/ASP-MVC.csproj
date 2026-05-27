@@ -49,6 +49,7 @@
     <Content Update="Views\Report\_CompanyDialog.cshtml" />
     <Content Update="Views\Report\_ReportPreview.cshtml" />
     <Content Update="Views\Report\_ReportWorkspace.cshtml" />
+    <Content Include="Poc\TECHNICAL-SPEC.md" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
 </Project>
