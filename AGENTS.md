@@ -140,6 +140,8 @@ DBアクセス専用。DapperとSQLを書く場所。
 
 ここでは「帳票を書く」のではなく、「Entityを帳票へ投影する定義を書く」。
 
+txtテンプレートのファイル名は `Template(...)`、プレースホルダは標準ケースでは対象Fieldの `.TemplateKey(...)` としてここに定義する。
+
 禁止:
 
 - SQL
@@ -152,6 +154,8 @@ DBアクセス専用。DapperとSQLを書く場所。
 ## `ASP-MVC/Services/`
 
 ReportDefinitionを回して、UI生成、XML、txt差し込み、マスター取得、逆反映、Validationを成立させる場所。
+
+`TemplateRenderService` は帳票固有の `RenderXxx` メソッドを増やさず、ReportDefinitionのレンダーキーを回す汎用処理として保つこと。
 
 禁止:
 

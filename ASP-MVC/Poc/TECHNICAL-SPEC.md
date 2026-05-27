@@ -32,6 +32,7 @@ UI / XML Snapshot / txt出力 / マスター連携 / 逆反映
 成立している機能:
 
 - 帳票定義から入力Fieldを生成する
+- 帳票定義の `Field(...).TemplateKey(...)` からtxt差し込みを実行する
 - `Company` マスターを選択肢として表示する
 - 帳票入力中に会社マスター編集ダイアログを開く
 - 入力値から右側txtプレビューを更新する
@@ -152,30 +153,39 @@ DBアクセスだけを担当する。SQLとDapper呼び出しはこの層に閉
 - `ReportDefinition<TModel>`
 - `FieldDefinition`
 - `FieldDefinition<TModel, TValue>`
+- `ReportValueFormatter`
 - `UserFavoriteReportDefinition`
 - `FavoriteResolver`
 
 帳票定義例:
 
 ```csharp
+Template("user_favorite.txt");
+
 Field(user => user.UserName)
     .Label("名前")
     .Input("UserName")
     .FromMaster()
-    .AllowReverseReflect();
+  .AllowReverseReflect()
+  .TemplateKey("User.UserName");
 
 Field(user => user.Company!.CompanyName)
     .Label("会社")
     .Input("CompanyId")
     .FromMaster("Company")
-    .OpenDialog("/Report/CompanyDialog");
+  .OpenDialog("/Report/CompanyDialog")
+  .TemplateKey("Company.CompanyName");
 
 Field(user => user.Favorites)
     .Label("好きなもの")
     .Input("FavoriteNames")
     .AsCollection()
-    .ResolveWith<FavoriteResolver>();
+  .ResolveWith<FavoriteResolver>()
+  .TemplateKey("Favorite.FavoriteName")
+  .JoinWith("、");
 ```
+
+標準的な帳票では、txtテンプレートのプレースホルダはField定義の `TemplateKey` に定義する。UI、マスター取得、逆反映、txt差し込みの定義を同じFieldチェーンで読めるようにする。`TemplateRenderService` に帳票固有の `RenderXxx` メソッドを追加しない。
 
 ---
 
@@ -189,7 +199,7 @@ Field(user => user.Favorites)
 - Entityグラフの組み立て
 - 入力値の逆反映
 - XML serialize / deserialize
-- txtテンプレート差し込み
+- ReportDefinitionのレンダーキーに基づくtxtテンプレート差し込み
 - Resolver呼び出し
 - Validationの実行
 - 出力ファイル生成
@@ -309,6 +319,17 @@ txtテンプレートを置く。
 
 テンプレート置換はMustache等を使わず、単純文字列置換で行う。
 
+ただし置換キーと値の取得方法は `TemplateRenderService` へ直書きせず、`Reports/` のField定義に `TemplateKey` として定義する。
+
+例:
+
+```csharp
+Template("user_favorite.txt");
+Field(user => user.UserName).TemplateKey("User.UserName");
+Field(user => user.Company!.CompanyName).TemplateKey("Company.CompanyName");
+Field(user => user.Favorites).TemplateKey("Favorite.FavoriteName").JoinWith("、");
+```
+
 ---
 
 ### `DocumentDownload/`
@@ -402,7 +423,9 @@ UserService.GetUserGraph
   ↓
 ReportRendererService.BuildFields
   ↓
-TemplateRenderService.RenderUserFavorite
+TemplateRenderService.Render
+  ↓
+ReportDefinition.TemplateFields
   ↓
 ReportXmlService.Serialize
   ↓
@@ -418,7 +441,9 @@ POST /Report/PreviewUserFavorite
   ↓
 ReportEngine.RenderPreview
   ↓
-TemplateRenderService.RenderUserFavorite
+TemplateRenderService.Render
+  ↓
+ReportDefinition.TemplateFields
   ↓
 Views/Report/_ReportPreview.cshtml
   ↓
@@ -477,7 +502,9 @@ POST /Report/ExportUserFavorite
   ↓
 ReportEngine.ExportUserFavoriteText
   ↓
-TemplateRenderService.WriteUserFavorite
+TemplateRenderService.Write
+  ↓
+ReportDefinition.TemplateFields
   ↓
 DocumentDownload/{uuid}-user-{userId}.txt
 ```
@@ -525,15 +552,18 @@ DocumentDownload/{uuid}-user-{userId}.txt
 1. `Entities/` に必要なEntityまたは既存Entityの関連を追加する。
 2. 必要なDBアクセスを `Repository/` に追加する。
 3. `Reports/` に `ReportDefinition<T>` 派生クラスを追加し、Field定義を書く。
-4. 必要ならResolverやCustomRendererを `Reports/` または専用フォルダへ追加する。
-5. `ViewModels/` に画面表示・POST受信用モデルを追加する。
-6. `Services/` にEntityグラフ構築、逆反映、XML、txt出力の処理を追加する。
-7. `Controllers/` にHTTP入口を追加する。
-8. `Views/Report/` にViewまたはPartialViewを追加する。
-9. `DocumentTemplates/` にtxtテンプレートを追加する。
-10. `.csproj` に新規 `.cs` は `Compile`、新規 `.cshtml` / `.md` / テンプレートは `Content` として明示登録する。
-11. `Poc/TECHNICAL-SPEC.md` と必要なPoC文書を更新する。
-12. `dotnet build ASP-MVC/ASP-MVC.csproj` を実行する。
+4. 同じ帳票定義に `Template("file_name.txt")` を追加する。
+5. txtテンプレートのプレースホルダは対象Fieldへ `.TemplateKey("Placeholder.Name")` として追加する。
+6. collection差し込みが必要な場合は `.JoinWith("、")` のように連結文字を定義する。
+7. 必要ならResolverやCustomRendererを `Reports/` または専用フォルダへ追加する。
+8. `ViewModels/` に画面表示・POST受信用モデルを追加する。
+9. `Services/` にEntityグラフ構築、逆反映、XML、txt出力の処理を追加する。
+10. `Controllers/` にHTTP入口を追加する。
+11. `Views/Report/` にViewまたはPartialViewを追加する。
+12. `DocumentTemplates/` にtxtテンプレートを追加する。
+13. `.csproj` に新規 `.cs` は `Compile`、新規 `.cshtml` / `.md` / テンプレートは `Content` として明示登録する。
+14. `Poc/TECHNICAL-SPEC.md` と必要なPoC文書を更新する。
+15. `dotnet build ASP-MVC/ASP-MVC.csproj` を実行する。
 
 ---
 
@@ -545,6 +575,7 @@ DocumentDownload/{uuid}-user-{userId}.txt
 - Entity構造
 - テーブル構造
 - ReportDefinitionのField API
+- FieldDefinitionのTemplateKey / JoinWith API
 - Service責務
 - htmx target / endpoint
 - Alpine.jsが持つUI状態

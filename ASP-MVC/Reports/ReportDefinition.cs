@@ -16,10 +16,22 @@ public abstract class ReportDefinition<TModel>
 
     public IReadOnlyList<FieldDefinition> Fields => _fields;
 
+    public IEnumerable<FieldDefinition> TemplateFields => _fields.Where(definitionField => definitionField.HasTemplateKey);
+
+    public string TemplateFileName { get; private set; } = "";
+
     /// <summary>
     /// 派生クラスが帳票のField構成を定義する。
     /// </summary>
     protected abstract void Configure();
+
+    /// <summary>
+    /// この帳票定義が使用するtxtテンプレートファイル名を指定する。
+    /// </summary>
+    protected void Template(string templateFileName)
+    {
+        TemplateFileName = templateFileName;
+    }
 
     /// <summary>
     /// 型付きExpressionからPropertyPathと値取得関数を登録する。

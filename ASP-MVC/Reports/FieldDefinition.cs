@@ -1,6 +1,3 @@
-using System.Collections;
-using ASP_MVC.Entities;
-
 namespace ASP_MVC.Reports;
 
 /// <summary>
@@ -35,6 +32,14 @@ public abstract class FieldDefinition
     public string? MasterSource { get; private set; }
 
     public Type? ResolverType { get; private set; }
+
+    public string? TemplateKeyName { get; private set; }
+
+    public string TemplatePlaceholder => $"{{{{{TemplateKeyName}}}}}";
+
+    public string CollectionSeparator { get; private set; } = "";
+
+    public bool HasTemplateKey => !string.IsNullOrWhiteSpace(TemplateKeyName);
 
     /// <summary>
     /// 画面に出すラベルを帳票定義側で指定する。
@@ -101,6 +106,24 @@ public abstract class FieldDefinition
     }
 
     /// <summary>
+    /// このFieldがtxtテンプレートへ差し込まれるときのプレースホルダ名を定義する。
+    /// </summary>
+    public FieldDefinition TemplateKey(string templateKey)
+    {
+        TemplateKeyName = templateKey;
+        return this;
+    }
+
+    /// <summary>
+    /// collection値をtxtへ差し込むときの連結文字を指定する。
+    /// </summary>
+    public FieldDefinition JoinWith(string separator)
+    {
+        CollectionSeparator = separator;
+        return this;
+    }
+
+    /// <summary>
     /// 対象EntityからField値を取得する。
     /// </summary>
     public abstract object? ReadValue(object model);
@@ -110,7 +133,7 @@ public abstract class FieldDefinition
     /// </summary>
     public string ReadTextValue(object model)
     {
-        return FormatValue(ReadValue(model));
+        return ReportValueFormatter.Format(ReadValue(model));
     }
 
     /// <summary>
@@ -118,36 +141,14 @@ public abstract class FieldDefinition
     /// </summary>
     public IReadOnlyList<string> ReadCollectionValues(object model)
     {
-        var value = ReadValue(model);
-        if (value is null)
-        {
-            return [];
-        }
-
-        if (value is string text)
-        {
-            return [text];
-        }
-
-        if (value is IEnumerable values)
-        {
-            return values.Cast<object?>()
-                .Select(FormatValue)
-                .Where(textValue => !string.IsNullOrWhiteSpace(textValue))
-                .ToList();
-        }
-
-        return [FormatValue(value)];
+        return ReportValueFormatter.FormatCollection(ReadValue(model));
     }
 
-    private static string FormatValue(object? value)
+    /// <summary>
+    /// txtテンプレートへ差し込める文字列値へ変換する。
+    /// </summary>
+    public string ReadTemplateValue(object model)
     {
-        return value switch
-        {
-            null => "",
-            Company company => company.CompanyName,
-            Favorite favorite => favorite.FavoriteName,
-            _ => Convert.ToString(value) ?? ""
-        };
+        return ReportValueFormatter.Format(ReadValue(model), CollectionSeparator);
     }
 }

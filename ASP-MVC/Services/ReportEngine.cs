@@ -50,7 +50,7 @@ public class ReportEngine
         {
             UserId = user.Id,
             Fields = _rendererService.BuildFields(_definition, user, companies),
-            PreviewText = _templateRenderService.RenderUserFavorite(user),
+            PreviewText = _templateRenderService.Render(_definition, user),
             XmlData = _xmlService.Serialize(user),
             Message = message
         };
@@ -81,7 +81,7 @@ public class ReportEngine
     public string RenderPreview(UserFavoriteReportPostViewModel input)
     {
         var user = _userService.BuildTransientUser(input);
-        return _templateRenderService.RenderUserFavorite(user);
+        return _templateRenderService.Render(_definition, user);
     }
 
     /// <summary>
@@ -90,7 +90,8 @@ public class ReportEngine
     public string ExportUserFavoriteText(int userId)
     {
         var user = _userService.GetUserGraph(userId) ?? throw new InvalidOperationException("出力対象のユーザーが見つかりません。");
-        return _templateRenderService.WriteUserFavorite(user);
+        var fileName = $"{Guid.NewGuid():N}-user-{user.Id}.txt";
+        return _templateRenderService.Write(_definition, user, fileName);
     }
 
     /// <summary>

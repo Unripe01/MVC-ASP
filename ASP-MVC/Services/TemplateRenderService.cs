@@ -1,4 +1,4 @@
-using ASP_MVC.Entities;
+using ASP_MVC.Reports;
 
 namespace ASP_MVC.Services;
 
@@ -15,33 +15,50 @@ public class TemplateRenderService
     }
 
     /// <summary>
-    /// user_favorite.txtへEntity値を差し込み、プレビュー文字列を生成する。
+    /// ReportDefinitionのレンダーキーに従ってtxtプレビュー文字列を生成する。
     /// </summary>
-    public string RenderUserFavorite(User user)
+    public string Render<TModel>(ReportDefinition<TModel> definition, TModel model)
     {
-        var templatePath = Path.Combine(_environment.ContentRootPath, "DocumentTemplates", "user_favorite.txt");
-        var template = File.Exists(templatePath)
-            ? File.ReadAllText(templatePath)
-            : "企業：{{Company.CompanyName}}\nおなまえ：{{User.UserName}}\n好きなものリスト：{{Favorite.FavoriteName}}";
+        ArgumentNullException.ThrowIfNull(definition);
+        ArgumentNullException.ThrowIfNull(model);
 
-        return template
-            .Replace("{{Company.CompanyName}}", user.Company?.CompanyName ?? "")
-            .Replace("{{User.UserName}}", user.UserName)
-            .Replace("{{Favorite.FavoriteName}}", string.Join("、", user.Favorites.Select(favorite => favorite.FavoriteName)));
+        var output = LoadTemplate(definition.TemplateFileName);
+
+        foreach (var field in definition.TemplateFields)
+        {
+            output = output.Replace(field.TemplatePlaceholder, field.ReadTemplateValue(model));
+        }
+
+        return output;
     }
 
     /// <summary>
     /// txtテンプレート差し込み結果をDocumentDownloadへ保存する。
     /// </summary>
-    public string WriteUserFavorite(User user)
+    public string Write<TModel>(ReportDefinition<TModel> definition, TModel model, string fileName)
     {
-        var output = RenderUserFavorite(user);
+        var output = Render(definition, model);
         var outputDirectory = Path.Combine(_environment.ContentRootPath, "DocumentDownload");
         Directory.CreateDirectory(outputDirectory);
 
-        var fileName = $"{Guid.NewGuid():N}-user-{user.Id}.txt";
         var outputPath = Path.Combine(outputDirectory, fileName);
         File.WriteAllText(outputPath, output);
         return fileName;
+    }
+
+    private string LoadTemplate(string templateFileName)
+    {
+        if (string.IsNullOrWhiteSpace(templateFileName))
+        {
+            throw new InvalidOperationException("帳票定義にtxtテンプレートファイル名が設定されていません。");
+        }
+
+        var templatePath = Path.Combine(_environment.ContentRootPath, "DocumentTemplates", templateFileName);
+        if (!File.Exists(templatePath))
+        {
+            throw new FileNotFoundException("txtテンプレートが見つかりません。", templatePath);
+        }
+
+        return File.ReadAllText(templatePath);
     }
 }

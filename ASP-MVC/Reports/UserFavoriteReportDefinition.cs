@@ -12,22 +12,28 @@ public class UserFavoriteReportDefinition : ReportDefinition<User>
     /// </summary>
     protected override void Configure()
     {
+        Template("user_favorite.txt");
+
         Field(user => user.UserName)
             .Label("名前")
             .Input("UserName")
             .FromMaster()
-            .AllowReverseReflect();
+            .AllowReverseReflect()
+            .TemplateKey("User.UserName");
 
         Field(user => user.Company!.CompanyName)
             .Label("会社")
             .Input("CompanyId")
             .FromMaster("Company")
-            .OpenDialog("/Report/CompanyDialog");
+            .OpenDialog("/Report/CompanyDialog")
+            .TemplateKey("Company.CompanyName");
 
         Field(user => user.Favorites)
             .Label("好きなもの")
             .Input("FavoriteNames")
             .AsCollection()
-            .ResolveWith<FavoriteResolver>();
+            .ResolveWith<FavoriteResolver>()
+            .TemplateKey("Favorite.FavoriteName")
+            .JoinWith("、");
     }
 }
