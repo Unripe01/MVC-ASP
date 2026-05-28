@@ -9,14 +9,14 @@ namespace ASP_MVC.Services;
 /// </summary>
 public class MasterCrudService
 {
-    private readonly ICompanyRepository _companyRepository;
-    private readonly IFavoriteRepository _favoriteRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly CompanyRepository _companyRepository;
+    private readonly FavoriteRepository _favoriteRepository;
+    private readonly UserRepository _userRepository;
 
     public MasterCrudService(
-        ICompanyRepository companyRepository,
-        IFavoriteRepository favoriteRepository,
-        IUserRepository userRepository)
+        CompanyRepository companyRepository,
+        FavoriteRepository favoriteRepository,
+        UserRepository userRepository)
     {
         _companyRepository = companyRepository;
         _favoriteRepository = favoriteRepository;

@@ -117,10 +117,12 @@ DBアクセスだけを担当する。SQLとDapper呼び出しはこの層に閉
 
 現在の主なRepository:
 
-- `IUserRepository` / `UserRepository`
-- `ICompanyRepository` / `CompanyRepository`
-- `IFavoriteRepository` / `FavoriteRepository`
-- `IReportInstanceRepository` / `ReportInstanceRepository`
+- `UserRepository`
+- `CompanyRepository`
+- `FavoriteRepository`
+- `ReportInstanceRepository`
+
+このPoCではRepositoryインターフェースは作成せず、ServiceはRepository実装クラスへ直接依存する。
 
 ---
 

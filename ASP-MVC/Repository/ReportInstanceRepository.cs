@@ -7,7 +7,7 @@ namespace ASP_MVC.Repository;
 /// <summary>
 /// DapperでReportInstancesテーブルを読み書きするRepository。
 /// </summary>
-public class ReportInstanceRepository : IReportInstanceRepository
+public class ReportInstanceRepository
 {
     private readonly IDbConnection _connection;
 

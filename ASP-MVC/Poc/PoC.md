@@ -223,13 +223,15 @@ Repository は：
 # Repository例
 
 ```csharp id="jlwm6"
-public interface IUserRepository
+public class UserRepository
 {
-    User? Get(int id);
+    public User? Get(int id) { ... }
 
-    List<User> GetAll();
+    public List<User> GetAll() { ... }
 
-    void Save(User user);
+    public void Add(User user) { ... }
+
+    public void Update(User user) { ... }
 }
 ```
 

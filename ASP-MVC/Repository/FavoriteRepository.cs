@@ -7,7 +7,7 @@ namespace ASP_MVC.Repository;
 /// <summary>
 /// DapperでFavoritesテーブルを読み書きするRepository。
 /// </summary>
-public class FavoriteRepository : IFavoriteRepository
+public class FavoriteRepository
 {
     private readonly IDbConnection _connection;
 

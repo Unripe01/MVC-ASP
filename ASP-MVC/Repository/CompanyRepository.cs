@@ -7,7 +7,7 @@ namespace ASP_MVC.Repository;
 /// <summary>
 /// DapperでCompaniesテーブルを読み書きするRepository。
 /// </summary>
-public class CompanyRepository : ICompanyRepository
+public class CompanyRepository
 {
     private readonly IDbConnection _connection;
 

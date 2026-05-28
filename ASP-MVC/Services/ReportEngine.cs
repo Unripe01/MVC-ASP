@@ -13,8 +13,8 @@ public class ReportEngine
     private const string ReportType = "UserFavorite";
 
     private readonly UserFavoriteReportDefinition _definition;
-    private readonly ICompanyRepository _companyRepository;
-    private readonly IReportInstanceRepository _reportInstanceRepository;
+    private readonly CompanyRepository _companyRepository;
+    private readonly ReportInstanceRepository _reportInstanceRepository;
     private readonly ReportRendererService _rendererService;
     private readonly ReportXmlService _xmlService;
     private readonly TemplateRenderService _templateRenderService;
@@ -22,8 +22,8 @@ public class ReportEngine
 
     public ReportEngine(
         UserFavoriteReportDefinition definition,
-        ICompanyRepository companyRepository,
-        IReportInstanceRepository reportInstanceRepository,
+        CompanyRepository companyRepository,
+        ReportInstanceRepository reportInstanceRepository,
         ReportRendererService rendererService,
         ReportXmlService xmlService,
         TemplateRenderService templateRenderService,

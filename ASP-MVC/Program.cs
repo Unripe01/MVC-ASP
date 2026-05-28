@@ -10,10 +10,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
-builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
-builder.Services.AddScoped<IReportInstanceRepository, ReportInstanceRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<CompanyRepository>();
+builder.Services.AddScoped<FavoriteRepository>();
+builder.Services.AddScoped<ReportInstanceRepository>();
+builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserFavoriteReportDefinition>();
 builder.Services.AddScoped<ReportEngine>();
 builder.Services.AddScoped<ReportRendererService>();

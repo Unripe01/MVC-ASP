@@ -21,10 +21,6 @@
     <Compile Update="Controllers\ReportController.cs" />
     <Compile Update="Repository\CompanyRepository.cs" />
     <Compile Update="Repository\FavoriteRepository.cs" />
-    <Compile Update="Repository\ICompanyRepository.cs" />
-    <Compile Update="Repository\IFavoriteRepository.cs" />
-    <Compile Update="Repository\IReportInstanceRepository.cs" />
-    <Compile Update="Repository\IUserRepository.cs" />
     <Compile Update="Repository\ReportInstanceRepository.cs" />
     <Compile Update="Repository\UserRepository.cs" />
     <Compile Update="Reports\FavoriteResolver.cs" />

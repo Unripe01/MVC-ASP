@@ -7,7 +7,7 @@ namespace ASP_MVC.Repository;
 /// <summary>
 /// DapperでUsersテーブルを読み書きするRepository。
 /// </summary>
-public class UserRepository : IUserRepository
+public class UserRepository
 {
     private readonly IDbConnection _connection;
 
