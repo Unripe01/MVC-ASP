@@ -60,8 +60,8 @@ public class ReportEngine
     public UserFavoriteReportViewModel SaveUserFavoriteReport(UserFavoriteReportPostViewModel input)
     {
         var user = UserService.NormalizeReportUser(_userService.BuildReportUser(input));
-        SaveSnapshot(user);
-        return BuildWorkspace(user, "XMLを保存しました", input.SelectedFieldIds);
+        var savedXmlData = SaveSnapshot(user);
+        return BuildWorkspace(user, "XMLを保存しました", input.SelectedFieldIds, savedXmlData);
     }
 
     /// <summary>
@@ -210,7 +210,7 @@ public class ReportEngine
         };
     }
 
-    private void SaveSnapshot(User user)
+    private string SaveSnapshot(User user)
     {
         var xmlData = _xmlService.Serialize(user);
 
@@ -221,6 +221,8 @@ public class ReportEngine
             XmlData = xmlData,
             CreatedAt = DateTime.UtcNow
         });
+
+        return xmlData;
     }
 
     private static User MergeReflectedFields(User sourceUser, User reflectedUser, IReadOnlySet<string> selectedFieldIds)

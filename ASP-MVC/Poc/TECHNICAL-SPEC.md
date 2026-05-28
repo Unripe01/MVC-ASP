@@ -517,8 +517,6 @@ UserService.GetUserGraph / CompanyRepository.Get
   ↓
 選択項目だけ帳票モデルへ反映
   ↓
-ReportInstanceRepository.Upsert
-  ↓
 Views/Report/_ReportWorkspace.cshtml
   ↓
 #reportWorkspace 差し替え
@@ -542,12 +540,16 @@ FavoriteRepository.ReplaceForUser
   ↓
 反映後のマスター値を帳票モデルへ戻す
   ↓
-ReportInstanceRepository.Upsert
-  ↓
 Views/Report/_ReportWorkspace.cshtml
   ↓
 #reportWorkspace 差し替え
 ```
+
+補足:
+
+- フォーム入力中の値は編集中の帳票データであり、保存済みXMLとは別に扱う
+- `XML保存` を実行した時だけ `ReportInstanceRepository.Upsert` が走る
+- `マスター取得` / `マスター逆反映` は画面状態の更新であり、XML保存は行わない
 
 ### マスター編集ダイアログ
 
