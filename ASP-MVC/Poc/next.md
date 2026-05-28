@@ -1,7 +1,8 @@
 次に触るなら、優先度はこの順がよさそうです。
 
 完了: Company / User / Favorite のCRUD画面を PoC責務境界に合わせて整える
-マスターダイアログ保存後に選択中Fieldへ確実に再反映する動きを強化する
+完了: 帳票一覧から選択して帳票登録画面へ遷移する導線を追加する
+完了: user_info 帳票を追加する
 ReportDefinition のField定義からValidationも出せるようにする
 ReportInstance の保存履歴表示とXML復元を追加する
 
@@ -15,3 +16,11 @@ ReportInstance の保存履歴表示とXML復元を追加する
 6. Report XML 復元時の POST バインド、UI生成、txtプレビュー、保存対象XML生成を `ReportDefinition` とその周辺抽象だけで回せるようにして、Controller が帳票名以外を知らなくて済む形へ寄せる
 7. 帳票固有の ViewModel を増やすのではなく、共通の Report 画面 ViewModel に `ReportDefinition` 由来の metadata を集約する
 8. 会社・好きなもののような既存項目だけでなく、今後の `働く場所` 複数選択のような新しい1:Nでも、追加実装が `ReportDefinition` と必要最小限の custom resolver で閉じるかを検証する
+
+### いまの境界メモ
+
+- `GetUserGraph` は「マスター駆動の帳票」にだけ使う。すべての帳票で毎回グラフ生成する前提にしない
+- XML駆動の帳票は、保存済みXMLの deserialize を正として表示・出力する
+- `user_info` のようにマスター逆反映が不要な帳票は、ReportDefinition と共通の XML/Preview/Export 処理だけで成立させる
+- 新しい帳票は、まず ReportDefinition を追加し、特殊処理があるときだけ Resolver / Fetcher / ReverseReflector を足す
+- `働く場所` のような複数選択は、1:N を表現する Field と、必要最小限の特殊処理抽象を足す方針で扱う

@@ -5,7 +5,7 @@ namespace ASP_MVC.Reports;
 /// <summary>
 /// Entityを帳票へ投影するField定義の基底クラス。
 /// </summary>
-public abstract class ReportDefinition<TModel>
+public abstract class ReportDefinition<TModel> : IReportDefinitionMetadata
 {
     private readonly List<FieldDefinition> _fields = [];
 
@@ -15,6 +15,14 @@ public abstract class ReportDefinition<TModel>
     }
 
     public IReadOnlyList<FieldDefinition> Fields => _fields;
+
+    public string ReportKey { get; private set; } = "";
+
+    public string DisplayTitle { get; private set; } = "";
+
+    public string? Summary { get; private set; }
+
+    public bool SupportsMasterActions { get; private set; }
 
     public IEnumerable<FieldDefinition> TemplateFields => _fields.Where(definitionField => definitionField.HasTemplateKey);
 
@@ -31,6 +39,17 @@ public abstract class ReportDefinition<TModel>
     protected void Template(string templateFileName)
     {
         TemplateFileName = templateFileName;
+    }
+
+    /// <summary>
+    /// 帳票一覧や画面タイトルに使うメタデータを定義する。
+    /// </summary>
+    protected void DefineReport(string reportKey, string displayTitle, string? summary = null, bool supportsMasterActions = false)
+    {
+        ReportKey = reportKey;
+        DisplayTitle = displayTitle;
+        Summary = summary;
+        SupportsMasterActions = supportsMasterActions;
     }
 
     /// <summary>

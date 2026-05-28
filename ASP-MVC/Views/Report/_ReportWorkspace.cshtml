@@ -1,10 +1,16 @@
-@model UserFavoriteReportViewModel
+@model ReportWorkspaceViewModel
+
+@{
+    var saveAction = Model.ReportKey == "UserInfo" ? "SaveUserInfo" : "SaveUserFavorite";
+    var previewAction = Model.ReportKey == "UserInfo" ? "PreviewUserInfo" : "PreviewUserFavorite";
+    var exportAction = Model.ReportKey == "UserInfo" ? "ExportUserInfo" : "ExportUserFavorite";
+}
 
 <div id="reportWorkspace" class="report-grid">
     <section class="report-input-panel">
         <div class="section-heading">
             <p class="eyebrow">Definition Driven</p>
-            <h1>ユーザー好きなもの帳票</h1>
+            <h1>@Model.ReportTitle</h1>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(Model.Message))
@@ -13,7 +19,7 @@
         }
 
         <form id="reportForm"
-              hx-post="@Url.Action("SaveUserFavorite", "Report")"
+              hx-post="@Url.Action(saveAction, "Report")"
               hx-target="#reportWorkspace"
               hx-swap="outerHTML">
             <input type="hidden" name="UserId" value="@Model.UserId" />
@@ -61,7 +67,7 @@
                                                name="@field.InputName"
                                                value="@values.ElementAt(index)"
                                                autocomplete="off"
-                                               hx-post="@Url.Action("PreviewUserFavorite", "Report")"
+                                               hx-post="@Url.Action(previewAction, "Report")"
                                                hx-target="#previewRegion"
                                                hx-swap="outerHTML"
                                                hx-include="#reportForm"
@@ -76,7 +82,7 @@
                                         <input class="form-control"
                                                name="@field.InputName"
                                                autocomplete="off"
-                                               hx-post="@Url.Action("PreviewUserFavorite", "Report")"
+                                               hx-post="@Url.Action(previewAction, "Report")"
                                                hx-target="#previewRegion"
                                                hx-swap="outerHTML"
                                                hx-include="#reportForm"
@@ -94,7 +100,7 @@
                                 <select id="@field.FieldId"
                                         class="form-select"
                                         name="@field.InputName"
-                                        hx-post="@Url.Action("PreviewUserFavorite", "Report")"
+                                        hx-post="@Url.Action(previewAction, "Report")"
                                         hx-target="#previewRegion"
                                         hx-swap="outerHTML"
                                         hx-include="#reportForm"
@@ -126,7 +132,7 @@
                                    name="@field.InputName"
                                    value="@field.Value"
                                    autocomplete="off"
-                                   hx-post="@Url.Action("PreviewUserFavorite", "Report")"
+                                   hx-post="@Url.Action(previewAction, "Report")"
                                    hx-target="#previewRegion"
                                    hx-swap="outerHTML"
                                    hx-include="#reportForm"
@@ -136,24 +142,27 @@
                 }
             </div>
 
-            <div class="form-actions">
-                <button type="button"
+                <div class="form-actions">
+                @if (Model.SupportsMasterActions)
+                {
+                    <button type="button"
                         class="btn btn-outline-primary"
                         hx-post="@Url.Action("FetchMasterValues", "Report")"
                         hx-target="#reportWorkspace"
                         hx-swap="outerHTML"
                         hx-include="#reportForm">マスター取得</button>
-                <button type="button"
+                    <button type="button"
                         class="btn btn-outline-secondary"
                         hx-post="@Url.Action("ReverseReflect", "Report")"
                         hx-target="#reportWorkspace"
                         hx-swap="outerHTML"
                         hx-include="#reportForm">マスター逆反映</button>
+                }
                 <button type="submit" class="btn btn-primary">XML保存</button>
             </div>
         </form>
 
-        <form hx-post="@Url.Action("ExportUserFavorite", "Report")"
+            <form hx-post="@Url.Action(exportAction, "Report")"
               hx-target="#reportWorkspace"
               hx-swap="outerHTML"
               class="export-form">

@@ -1,0 +1,8 @@
+# {{User.UserName}}さんの情報
+
+## 詳細
+国籍：{{User.Nationality}}
+企業：{{Company.CompanyName}}
+年齢：{{User.Age}}
+血液型：{{User.BloodType}}
+生年月日：{{User.Birthday}}

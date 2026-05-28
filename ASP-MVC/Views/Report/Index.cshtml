@@ -1,0 +1,33 @@
+@model ReportCatalogViewModel
+
+@{
+    ViewData["Title"] = "帳票一覧";
+}
+
+<div class="section-heading">
+    <p class="eyebrow">Report Catalog</p>
+    <h1>帳票一覧</h1>
+</div>
+
+<p class="mb-4">登録する帳票を選択してください。</p>
+
+<div class="row g-3">
+@foreach (var report in Model.Reports)
+{
+    <div class="col-12 col-md-6">
+        <div class="report-input-panel h-100">
+            <div class="d-flex flex-column gap-2">
+                <div>
+                    <h2 class="h5 mb-1">@report.ReportTitle</h2>
+                    @if (!string.IsNullOrWhiteSpace(report.Summary))
+                    {
+                        <p class="text-muted mb-0">@report.Summary</p>
+                    }
+                </div>
+
+                <a asp-action="@report.RouteAction" asp-route-id="@Model.UserId" class="btn btn-primary align-self-start">選択して開く</a>
+            </div>
+        </div>
+    </div>
+}
+</div>

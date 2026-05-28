@@ -48,6 +48,10 @@ public class UserService
             Id = input.UserId,
             CompanyId = input.CompanyId,
             UserName = input.UserName ?? "",
+            Nationality = input.Nationality ?? "",
+            Age = input.Age ?? "",
+            BloodType = input.BloodType ?? "",
+            Birthday = input.Birthday ?? "",
             Company = new Company
             {
                 Id = input.CompanyId,

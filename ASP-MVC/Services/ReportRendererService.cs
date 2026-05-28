@@ -12,22 +12,22 @@ public class ReportRendererService
     /// <summary>
     /// 定義済みFieldを画面表示用の入力モデルへ変換する。
     /// </summary>
-    public IReadOnlyList<ReportFieldInputViewModel> BuildFields(
-        UserFavoriteReportDefinition definition,
-        User user,
+    public IReadOnlyList<ReportFieldInputViewModel> BuildFields<TModel>(
+        ReportDefinition<TModel> definition,
+        TModel model,
         IReadOnlyList<Company> companies,
         IReadOnlySet<string>? selectedFieldIds = null)
     {
         var selectedFields = selectedFieldIds ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         return definition.Fields
-            .Select(field => BuildField(field, user, companies, selectedFields))
+            .Select(field => BuildField(field, model, companies, selectedFields))
             .ToList();
     }
 
-    private static ReportFieldInputViewModel BuildField(
+    private static ReportFieldInputViewModel BuildField<TModel>(
         FieldDefinition field,
-        User user,
+        TModel model,
         IReadOnlyList<Company> companies,
         IReadOnlySet<string> selectedFieldIds)
     {
@@ -37,11 +37,11 @@ public class ReportRendererService
             PropertyPath = field.PropertyPath,
             Label = field.DisplayLabel,
             InputName = field.InputName,
-            Value = field.ReadTextValue(user),
-            HiddenValue = field.ReadTextValue(user),
-            Values = field.ReadCollectionValues(user),
-            ValueIds = BuildValueIds(field, user),
-            Options = BuildOptions(field, user, companies),
+            Value = field.ReadTextValue(model!),
+            HiddenValue = field.ReadTextValue(model!),
+            Values = field.ReadCollectionValues(model!),
+            ValueIds = BuildValueIds(field, model),
+            Options = BuildOptions(field, model, companies),
             IsCollection = field.IsCollection,
             IsFromMaster = field.IsFromMaster,
             AllowReverseReflection = field.AllowReverseReflection,
@@ -50,9 +50,9 @@ public class ReportRendererService
         };
     }
 
-    private static IReadOnlyList<int> BuildValueIds(FieldDefinition field, User user)
+    private static IReadOnlyList<int> BuildValueIds<TModel>(FieldDefinition field, TModel model)
     {
-        if (!field.IsCollection || field.PropertyPath != "Favorites")
+        if (!field.IsCollection || field.PropertyPath != "Favorites" || model is not User user)
         {
             return [];
         }
@@ -60,12 +60,12 @@ public class ReportRendererService
         return user.Favorites.Select(favorite => favorite.Id).ToList();
     }
 
-    private static IReadOnlyList<ReportSelectOptionViewModel> BuildOptions(
+    private static IReadOnlyList<ReportSelectOptionViewModel> BuildOptions<TModel>(
         FieldDefinition field,
-        User user,
+        TModel model,
         IReadOnlyList<Company> companies)
     {
-        if (field.MasterSource != "Company")
+        if (field.MasterSource != "Company" || model is not User user)
         {
             return [];
         }

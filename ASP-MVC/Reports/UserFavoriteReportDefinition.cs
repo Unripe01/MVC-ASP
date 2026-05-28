@@ -12,6 +12,12 @@ public class UserFavoriteReportDefinition : ReportDefinition<User>
     /// </summary>
     protected override void Configure()
     {
+        DefineReport(
+            reportKey: "UserFavorite",
+            displayTitle: "ユーザー好きなもの帳票",
+            summary: "ユーザーと好きなものを扱う帳票",
+            supportsMasterActions: true);
+
         Template("user_favorite.txt");
 
         Field(user => user.UserName)
