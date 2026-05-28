@@ -37,11 +37,15 @@
     <Compile Update="Reports\UserInfoReportDefinition.cs" />
     <Compile Update="Services\ReportEngine.cs" />
     <Compile Update="Services\MasterCrudService.cs" />
+    <Compile Update="Services\IReportWorkflow.cs" />
     <Compile Update="Services\ReportCatalogService.cs" />
     <Compile Update="Services\ReportDocumentService.cs" />
+    <Compile Update="Services\ReportWorkflowRegistry.cs" />
     <Compile Update="Services\ReportRendererService.cs" />
     <Compile Update="Services\ReportXmlService.cs" />
     <Compile Update="Services\TemplateRenderService.cs" />
+    <Compile Update="Services\UserFavoriteReportWorkflow.cs" />
+    <Compile Update="Services\UserInfoReportWorkflow.cs" />
     <Compile Update="Services\UserService.cs" />
     <Compile Update="ViewModels\CrudCompanyInputViewModel.cs" />
     <Compile Update="ViewModels\CrudCompanyPageViewModel.cs" />

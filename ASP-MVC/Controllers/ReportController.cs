@@ -1,7 +1,4 @@
-using ASP_MVC.Entities;
-using ASP_MVC.Repository;
 using ASP_MVC.Services;
-using ASP_MVC.Reports;
 using ASP_MVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,29 +9,21 @@ namespace ASP_MVC.Controllers;
 /// </summary>
 public class ReportController : Controller
 {
-    private static readonly StringComparer FieldComparer = StringComparer.OrdinalIgnoreCase;
+    private const string UserFavoriteReportKey = "UserFavorite";
+    private const string UserInfoReportKey = "UserInfo";
 
     private readonly ReportCatalogService _reportCatalogService;
-    private readonly ReportDocumentService _reportDocumentService;
+    private readonly ReportWorkflowRegistry _workflowRegistry;
     private readonly ReportEngine _reportEngine;
-    private readonly CompanyRepository _companyRepository;
-    private readonly UserService _userService;
-    private readonly UserInfoReportDefinition _userInfoReportDefinition;
 
     public ReportController(
         ReportCatalogService reportCatalogService,
-        ReportDocumentService reportDocumentService,
-        ReportEngine reportEngine,
-        CompanyRepository companyRepository,
-        UserService userService,
-        UserInfoReportDefinition userInfoReportDefinition)
+        ReportWorkflowRegistry workflowRegistry,
+        ReportEngine reportEngine)
     {
         _reportCatalogService = reportCatalogService;
-        _reportDocumentService = reportDocumentService;
+        _workflowRegistry = workflowRegistry;
         _reportEngine = reportEngine;
-        _companyRepository = companyRepository;
-        _userService = userService;
-        _userInfoReportDefinition = userInfoReportDefinition;
     }
 
     /// <summary>
@@ -53,7 +42,7 @@ public class ReportController : Controller
     [HttpGet]
     public IActionResult UserFavorite(int id = 1)
     {
-        var model = _reportEngine.BuildUserFavoriteReport(id);
+        var model = _workflowRegistry.GetRequired(UserFavoriteReportKey).Open(id);
         return View(model);
     }
 
@@ -63,16 +52,7 @@ public class ReportController : Controller
     [HttpGet]
     public IActionResult UserInfo(int id = 1)
     {
-        var snapshot = _reportDocumentService.GetLatestSnapshot(id, "UserInfo");
-        var document = RestoreUserInfoDocument(snapshot?.XmlData, id);
-
-        var model = _reportDocumentService.BuildWorkspace(
-            _userInfoReportDefinition,
-            document,
-            reportKey: _userInfoReportDefinition.ReportKey,
-            reportTitle: _userInfoReportDefinition.DisplayTitle,
-            savedXmlData: snapshot?.XmlData ?? "");
-
+        var model = _workflowRegistry.GetRequired(UserInfoReportKey).Open(id);
         return View(model);
     }
 
@@ -82,7 +62,8 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult SaveUserFavorite(UserFavoriteReportPostViewModel input)
     {
-        var model = _reportEngine.SaveUserFavoriteReport(input);
+        input.ReportKey = UserFavoriteReportKey;
+        var model = _workflowRegistry.GetRequired(UserFavoriteReportKey).Save(input);
         return PartialView("_ReportWorkspace", model);
     }
 
@@ -92,9 +73,10 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult PreviewUserFavorite(UserFavoriteReportPostViewModel input)
     {
+        input.ReportKey = UserFavoriteReportKey;
         var model = new ReportPreviewViewModel
         {
-            PreviewText = _reportEngine.RenderPreview(input)
+            PreviewText = _workflowRegistry.GetRequired(UserFavoriteReportKey).Preview(input)
         };
 
         return PartialView("_ReportPreview", model);
@@ -106,12 +88,8 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult FetchMasterValues(UserFavoriteReportPostViewModel input)
     {
-        if (string.Equals(input.ReportKey, _userInfoReportDefinition.ReportKey, StringComparison.OrdinalIgnoreCase))
-        {
-            return PartialView("_ReportWorkspace", FetchUserInfoMasterValues(input));
-        }
-
-        var model = _reportEngine.FetchMasterValues(input);
+        var reportKey = string.IsNullOrWhiteSpace(input.ReportKey) ? UserFavoriteReportKey : input.ReportKey;
+        var model = _workflowRegistry.GetRequired(reportKey).FetchMaster(input);
         return PartialView("_ReportWorkspace", model);
     }
 
@@ -121,12 +99,8 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult ReverseReflect(UserFavoriteReportPostViewModel input)
     {
-        if (string.Equals(input.ReportKey, _userInfoReportDefinition.ReportKey, StringComparison.OrdinalIgnoreCase))
-        {
-            return PartialView("_ReportWorkspace", ReverseReflectUserInfo(input));
-        }
-
-        var model = _reportEngine.ReverseReflect(input);
+        var reportKey = string.IsNullOrWhiteSpace(input.ReportKey) ? UserFavoriteReportKey : input.ReportKey;
+        var model = _workflowRegistry.GetRequired(reportKey).ReverseReflect(input);
         return PartialView("_ReportWorkspace", model);
     }
 
@@ -149,7 +123,8 @@ public class ReportController : Controller
         _reportEngine.SaveCompanyDialog(input);
         Response.Headers["HX-Trigger"] = "report-modal-close";
 
-        var model = _reportEngine.BuildUserFavoriteReport(input.UserId, "会社マスターを更新しました");
+        var model = _workflowRegistry.GetRequired(UserFavoriteReportKey).Open(input.UserId);
+        model.Message = "会社マスターを更新しました";
         return PartialView("_ReportWorkspace", model);
     }
 
@@ -159,8 +134,7 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult ExportUserFavorite(int userId)
     {
-        var fileName = _reportEngine.ExportUserFavoriteText(userId);
-        var model = _reportEngine.BuildUserFavoriteReport(userId, $"{fileName} を出力しました");
+        var model = _workflowRegistry.GetRequired(UserFavoriteReportKey).Export(userId);
         return PartialView("_ReportWorkspace", model);
     }
 
@@ -170,21 +144,8 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult SaveUserInfo(UserFavoriteReportPostViewModel input)
     {
-        var currentSnapshot = _reportDocumentService.GetLatestSnapshot(input.UserId, _userInfoReportDefinition.ReportKey);
-        var existingDocument = currentSnapshot is null
-            ? null
-            : RestoreUserInfoDocument(currentSnapshot.XmlData, input.UserId);
-        var document = BuildInfoDocument(input, existingDocument);
-
-        var savedXmlData = _reportDocumentService.SaveSnapshot("UserInfo", input.UserId, document);
-        var model = _reportDocumentService.BuildWorkspace(
-            _userInfoReportDefinition,
-            document,
-            reportKey: _userInfoReportDefinition.ReportKey,
-            reportTitle: _userInfoReportDefinition.DisplayTitle,
-            message: "XMLを保存しました",
-            savedXmlData: savedXmlData);
-
+        input.ReportKey = UserInfoReportKey;
+        var model = _workflowRegistry.GetRequired(UserInfoReportKey).Save(input);
         return PartialView("_ReportWorkspace", model);
     }
 
@@ -194,11 +155,10 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult PreviewUserInfo(UserFavoriteReportPostViewModel input)
     {
-        var document = BuildInfoDocument(input);
-
+        input.ReportKey = UserInfoReportKey;
         var model = new ReportPreviewViewModel
         {
-            PreviewText = _reportDocumentService.RenderPreview(_userInfoReportDefinition, document)
+            PreviewText = _workflowRegistry.GetRequired(UserInfoReportKey).Preview(input)
         };
 
         return PartialView("_ReportPreview", model);
@@ -210,247 +170,7 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult ExportUserInfo(int userId)
     {
-        var snapshot = _reportDocumentService.GetLatestSnapshot(userId, "UserInfo")
-            ?? throw new InvalidOperationException("出力対象の保存済み帳票が見つかりません。");
-
-        var document = RestoreUserInfoDocument(snapshot.XmlData, userId);
-        var user = document.Model ?? CreateEmptyUser(userId);
-        var fileName = $"{Guid.NewGuid():N}-user-info-{user.Id}.txt";
-        _reportDocumentService.Write(_userInfoReportDefinition, document, fileName);
-
-        var model = _reportDocumentService.BuildWorkspace(
-            _userInfoReportDefinition,
-            document,
-            reportKey: _userInfoReportDefinition.ReportKey,
-            reportTitle: _userInfoReportDefinition.DisplayTitle,
-            message: $"{fileName} を出力しました",
-            savedXmlData: snapshot.XmlData);
-
+        var model = _workflowRegistry.GetRequired(UserInfoReportKey).Export(userId);
         return PartialView("_ReportWorkspace", model);
-    }
-
-    private static User CreateEmptyUser(int userId)
-    {
-        return new User
-        {
-            Id = userId,
-            Company = new Company(),
-            Favorites = []
-        };
-    }
-
-    private static User BuildInfoUser(UserFavoriteReportPostViewModel input)
-    {
-        return new User
-        {
-            Id = input.UserId,
-            CompanyId = input.CompanyId,
-            UserName = input.UserName ?? "",
-            Nationality = input.Nationality ?? "",
-            Age = input.Age ?? "",
-            BloodType = input.BloodType ?? "",
-            Birthday = input.Birthday ?? "",
-            Company = new Company
-            {
-                Id = input.CompanyId,
-                CompanyName = input.CompanyName ?? ""
-            },
-            Favorites = []
-        };
-    }
-
-    private static ReportDocument<User> BuildInfoDocument(
-        UserFavoriteReportPostViewModel input,
-        ReportDocument<User>? existingDocument = null)
-    {
-        var document = existingDocument ?? ReportDocument<User>.FromModel(CreateEmptyUser(input.UserId));
-        document.Model = UserService.NormalizeReportUser(BuildInfoUser(input));
-        document.Values = MergeReportValues(document.Values, BuildReportValues(input));
-        return document;
-    }
-
-    private ReportDocument<User> RestoreUserInfoDocument(string? xmlData, int userId)
-    {
-        if (string.IsNullOrWhiteSpace(xmlData))
-        {
-            return ReportDocument<User>.FromModel(CreateEmptyUser(userId));
-        }
-
-        var document = TryDeserializeUserInfoDocument(xmlData);
-        if (document?.Model is not null)
-        {
-            document.Model = UserService.NormalizeReportUser(document.Model);
-            document.Values ??= [];
-            return document;
-        }
-
-        var legacyUser = _reportDocumentService.Deserialize<User>(xmlData) ?? CreateEmptyUser(userId);
-        return ReportDocument<User>.FromModel(UserService.NormalizeReportUser(legacyUser));
-    }
-
-    private ReportDocument<User>? TryDeserializeUserInfoDocument(string xmlData)
-    {
-        try
-        {
-            return _reportDocumentService.Deserialize<ReportDocument<User>>(xmlData);
-        }
-        catch (InvalidOperationException)
-        {
-            return null;
-        }
-    }
-
-    private static IReadOnlyList<ReportFieldValue> BuildReportValues(UserFavoriteReportPostViewModel input)
-    {
-        return input.ReportValues
-            .Where(value => !string.IsNullOrWhiteSpace(value.Key))
-            .Select(value => new ReportFieldValue
-            {
-                Key = value.Key,
-                Value = value.Value ?? ""
-            })
-            .ToList();
-    }
-
-    private static List<ReportFieldValue> MergeReportValues(
-        IEnumerable<ReportFieldValue>? existingValues,
-        IReadOnlyList<ReportFieldValue> incomingValues)
-    {
-        var merged = (existingValues ?? [])
-            .Where(value => !string.IsNullOrWhiteSpace(value.Key))
-            .ToDictionary(value => value.Key, value => value.Value ?? "", StringComparer.OrdinalIgnoreCase);
-
-        foreach (var incoming in incomingValues)
-        {
-            if (string.IsNullOrWhiteSpace(incoming.Key))
-            {
-                continue;
-            }
-
-            merged[incoming.Key] = incoming.Value ?? "";
-        }
-
-        return merged
-            .Select(pair => new ReportFieldValue
-            {
-                Key = pair.Key,
-                Value = pair.Value
-            })
-            .ToList();
-    }
-
-    private ReportWorkspaceViewModel FetchUserInfoMasterValues(UserFavoriteReportPostViewModel input)
-    {
-        var selectedFieldIds = ToSelectedFieldSet(input.SelectedFieldIds);
-        var allowedFieldIds = ToAllowedFieldSet(_userInfoReportDefinition, field => field.IsFromMaster);
-        selectedFieldIds.IntersectWith(allowedFieldIds);
-
-        var document = BuildInfoDocument(input);
-        var user = _userService.GetUserGraph(input.UserId) ?? document.Model ?? CreateEmptyUser(input.UserId);
-        var snapshot = _reportDocumentService.GetLatestSnapshot(input.UserId, _userInfoReportDefinition.ReportKey);
-
-        if (selectedFieldIds.Count == 0)
-        {
-            return _reportDocumentService.BuildWorkspace(
-                _userInfoReportDefinition,
-                document,
-                reportKey: _userInfoReportDefinition.ReportKey,
-                reportTitle: _userInfoReportDefinition.DisplayTitle,
-                message: "マスター取得対象を選択してください",
-                selectedFieldIds: input.SelectedFieldIds,
-                savedXmlData: snapshot?.XmlData ?? "");
-        }
-
-        if (selectedFieldIds.Contains("UserName"))
-        {
-            document.Model!.UserName = user.UserName;
-        }
-
-        if (selectedFieldIds.Contains("Nationality"))
-        {
-            document.Model!.Nationality = user.Nationality;
-        }
-
-        if (selectedFieldIds.Contains("Age"))
-        {
-            document.Model!.Age = user.Age;
-        }
-
-        if (selectedFieldIds.Contains("BloodType"))
-        {
-            document.Model!.BloodType = user.BloodType;
-        }
-
-        if (selectedFieldIds.Contains("Birthday"))
-        {
-            document.Model!.Birthday = user.Birthday;
-        }
-
-        if (selectedFieldIds.Contains("Company_CompanyName"))
-        {
-            document.Model!.CompanyId = user.CompanyId;
-            document.Model!.Company = user.Company ?? new Company();
-        }
-
-        return _reportDocumentService.BuildWorkspace(
-            _userInfoReportDefinition,
-            document,
-            reportKey: _userInfoReportDefinition.ReportKey,
-            reportTitle: _userInfoReportDefinition.DisplayTitle,
-            message: "選択項目をマスターから取得しました",
-            selectedFieldIds: input.SelectedFieldIds,
-            savedXmlData: snapshot?.XmlData ?? "");
-    }
-
-    private ReportWorkspaceViewModel ReverseReflectUserInfo(UserFavoriteReportPostViewModel input)
-    {
-        var selectedFieldIds = ToSelectedFieldSet(input.SelectedFieldIds);
-        var allowedFieldIds = ToAllowedFieldSet(_userInfoReportDefinition, field => field.AllowReverseReflection);
-        selectedFieldIds.IntersectWith(allowedFieldIds);
-
-        var document = BuildInfoDocument(input);
-        var user = document.Model ?? CreateEmptyUser(input.UserId);
-        var snapshot = _reportDocumentService.GetLatestSnapshot(input.UserId, _userInfoReportDefinition.ReportKey);
-
-        if (selectedFieldIds.Count == 0)
-        {
-            return _reportDocumentService.BuildWorkspace(
-                _userInfoReportDefinition,
-                document,
-                reportKey: _userInfoReportDefinition.ReportKey,
-                reportTitle: _userInfoReportDefinition.DisplayTitle,
-                message: "逆反映対象を選択してください",
-                selectedFieldIds: input.SelectedFieldIds,
-                savedXmlData: snapshot?.XmlData ?? "");
-        }
-
-        var reflectedUser = UserService.NormalizeReportUser(_userService.ReverseReflect(user, selectedFieldIds));
-        document.Model = reflectedUser;
-
-        return _reportDocumentService.BuildWorkspace(
-            _userInfoReportDefinition,
-            document,
-            reportKey: _userInfoReportDefinition.ReportKey,
-            reportTitle: _userInfoReportDefinition.DisplayTitle,
-            message: "選択項目をマスターへ逆反映しました",
-            selectedFieldIds: input.SelectedFieldIds,
-            savedXmlData: snapshot?.XmlData ?? "");
-    }
-
-    private static HashSet<string> ToSelectedFieldSet(IEnumerable<string>? selectedFieldIds)
-    {
-        return selectedFieldIds is null
-            ? new HashSet<string>(FieldComparer)
-            : new HashSet<string>(selectedFieldIds.Where(value => !string.IsNullOrWhiteSpace(value)), FieldComparer);
-    }
-
-    private static HashSet<string> ToAllowedFieldSet(
-        UserInfoReportDefinition definition,
-        Func<FieldDefinition, bool> predicate)
-    {
-        return definition.Fields
-            .Where(predicate)
-            .Select(field => field.FieldId)
-            .ToHashSet(FieldComparer);
     }
 }

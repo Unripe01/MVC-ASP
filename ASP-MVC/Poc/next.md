@@ -23,5 +23,6 @@ ReportInstance の保存履歴表示とXML復元を追加する
 - XML駆動の帳票は、保存済みXMLの deserialize を正として表示・出力する
 - EntityやマスターDBに存在しない帳票専用項目は `Field("EntryDate")` のように定義し、`ReportDocument<TModel>.Values` としてXML Snapshotだけに保存する
 - マスター取得対象か、逆反映対象かは `FieldDefinition` の metadata (`FromMaster` / `AllowReverseReflect`) で定義し、画面表示と処理可否をそこから決める
+- Controllerは `IReportWorkflow` へ委譲し、帳票追加時の分岐追加を避ける
 - 新しい帳票は、まず ReportDefinition を追加し、特殊処理があるときだけ Resolver / Fetcher / ReverseReflector を足す
 - `働く場所` のような複数選択は、1:N を表現する Field と、必要最小限の特殊処理抽象を足す方針で扱う

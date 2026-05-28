@@ -1,4 +1,3 @@
-using ASP_MVC.Reports;
 using ASP_MVC.ViewModels;
 
 namespace ASP_MVC.Services;
@@ -8,17 +7,11 @@ namespace ASP_MVC.Services;
 /// </summary>
 public class ReportCatalogService
 {
-    private readonly IReadOnlyList<IReportDefinitionMetadata> _reportDefinitions;
+    private readonly ReportWorkflowRegistry _workflowRegistry;
 
-    public ReportCatalogService(
-        UserFavoriteReportDefinition userFavoriteReportDefinition,
-        UserInfoReportDefinition userInfoReportDefinition)
+    public ReportCatalogService(ReportWorkflowRegistry workflowRegistry)
     {
-        _reportDefinitions = new IReportDefinitionMetadata[]
-        {
-            userFavoriteReportDefinition,
-            userInfoReportDefinition
-        };
+        _workflowRegistry = workflowRegistry;
     }
 
     /// <summary>
@@ -29,13 +22,13 @@ public class ReportCatalogService
         return new ReportCatalogViewModel
         {
             UserId = userId,
-            Reports = _reportDefinitions
-                .Select(definition => new ReportCatalogItemViewModel
+            Reports = _workflowRegistry.Workflows
+                .Select(workflow => new ReportCatalogItemViewModel
                 {
-                    ReportKey = definition.ReportKey,
-                    ReportTitle = definition.DisplayTitle,
-                    Summary = definition.Summary,
-                    RouteAction = definition.ReportKey
+                    ReportKey = workflow.ReportKey,
+                    ReportTitle = workflow.ReportTitle,
+                    Summary = workflow.Summary,
+                    RouteAction = workflow.ReportKey
                 })
                 .ToList()
         };

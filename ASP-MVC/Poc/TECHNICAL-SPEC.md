@@ -228,11 +228,17 @@ EntityやマスターDBに存在せず、帳票XMLだけに保存する項目は
 
 現在の主なService:
 
+- `IReportWorkflow`
+- `ReportWorkflowRegistry`
 - `ReportEngine`
+- `UserFavoriteReportWorkflow`
+- `UserInfoReportWorkflow`
 - `ReportRendererService`
 - `ReportXmlService`
 - `TemplateRenderService`
 - `UserService`
+
+帳票Controllerは帳票固有処理を持たず、`ReportWorkflowRegistry` から `ReportKey` で `IReportWorkflow` を解決して処理を委譲する。新しい帳票追加時は、`ReportDefinition` と対応する `IReportWorkflow` 実装を追加してDI登録する。
 
 ---
 
