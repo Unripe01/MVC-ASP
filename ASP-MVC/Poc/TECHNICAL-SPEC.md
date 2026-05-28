@@ -47,7 +47,6 @@ UI / XML Snapshot / txt出力 / マスター連携 / 逆反映
 - ReportInstance履歴表示
 - 複数帳票定義の登録・選択
 - マスターダイアログ保存後のField単位再反映の精密化
-- Company / User / Favorite の通常CRUD画面整備
 
 ---
 
@@ -248,6 +247,9 @@ Field(user => user.Favorites)
 - `ReportSelectOptionViewModel`
 - `ReportPreviewViewModel`
 - `CompanyDialogViewModel`
+- `CrudCompanyPageViewModel`
+- `CrudUserPageViewModel`
+- `CrudFavoritePageViewModel`
 
 ---
 
@@ -273,9 +275,10 @@ HTTP入口を担当する。
 現在の主なController:
 
 - `ReportController`
+- `MasterController`
 - `HomeController`
 
-`HomeController` は旧ハンズオン由来の入口であり、PoCの主役ではない。帳票PoCの主入口は `ReportController` とする。
+`HomeController` はPoCのナビゲーション入口を返す。帳票PoCの主入口は `ReportController`、通常CRUDの主入口は `MasterController` とする。
 
 ---
 
@@ -306,6 +309,30 @@ HTTP入口を担当する。
 - `_CompanyDialog.cshtml`
 
 RazorでAlpine.jsを書く場合、`@click` はRazorのC#として解釈されるため使わない。必ず `x-on:click` を使う。
+
+---
+
+### `Views/Master/`
+
+Company / User / Favorite の通常CRUD画面を置く。
+
+置くもの:
+
+- 一覧テーブル
+- 追加/更新フォーム
+- 削除フォーム
+
+置かないもの:
+
+- SQL
+- Entity保存の詳細ロジック
+- 帳票定義ロジック
+
+現在の主なView:
+
+- `Companies.cshtml`
+- `Users.cshtml`
+- `Favorites.cshtml`
 
 ---
 
@@ -507,6 +534,40 @@ TemplateRenderService.Write
 ReportDefinition.TemplateFields
   ↓
 DocumentDownload/{uuid}-user-{userId}.txt
+```
+
+### 通常CRUD
+
+```text
+GET /Master/{Companies|Users|Favorites}
+  ↓
+MasterController
+  ↓
+MasterCrudService.BuildXxxPage
+  ↓
+Repository.GetAll / Get
+  ↓
+Views/Master/*.cshtml
+
+POST /Master/SaveXxx
+  ↓
+MasterController
+  ↓
+MasterCrudService.SaveXxx
+  ↓
+Repository.Add / Update
+  ↓
+RedirectToAction
+
+POST /Master/DeleteXxx
+  ↓
+MasterController
+  ↓
+MasterCrudService.DeleteXxx
+  ↓
+Repository.Delete
+  ↓
+RedirectToAction
 ```
 
 ---

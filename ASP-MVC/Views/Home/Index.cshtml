@@ -1,20 +1,19 @@
-﻿@model List<User>
-
-@{
-    // ViewData["Title"] = "Home Page";
+﻿@{
+    ViewData["Title"] = "PoC Home";
 }
 
-@* <a asp-action="Create" class="btn btn-primary">Create User</a> *@
-<a asp-controller="Home" asp-action="Create" class="btn btn-primary">登録</a>
+<div class="section-heading">
+    <p class="eyebrow">PoC Navigation</p>
+    <h1>帳票定義中心PoC</h1>
+</div>
 
-<h1>User List</h1>
-<ul>
-    @foreach (var user in Model)
-    {
-        <li>@user.UserName (@user.Company?.CompanyName)</li>
-    }
-</ul>
+<p class="mb-4">
+    画面責務を分離した入口です。帳票PoC本体と、Company / User / Favorite の通常CRUD画面へ遷移できます。
+</p>
 
-<h2>@ViewBag.Message</h2>
-
-<a asp-action="Detail" asp-route-id="5">Detail 5へ</a>
+<div class="d-flex flex-wrap gap-2">
+    <a asp-controller="Report" asp-action="UserFavorite" asp-route-id="1" class="btn btn-primary">Report PoC</a>
+    <a asp-controller="Master" asp-action="Companies" class="btn btn-outline-primary">Company CRUD</a>
+    <a asp-controller="Master" asp-action="Users" class="btn btn-outline-primary">User CRUD</a>
+    <a asp-controller="Master" asp-action="Favorites" class="btn btn-outline-primary">Favorite CRUD</a>
+</div>

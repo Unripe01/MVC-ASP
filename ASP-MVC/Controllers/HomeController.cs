@@ -1,62 +1,27 @@
 using System.Diagnostics;
-using ASP_MVC.Entities;
 using ASP_MVC.Models;
 using Microsoft.AspNetCore.Mvc;
-using ASP_MVC.Repository;
 
-namespace ASP_MVC.Controllers
+namespace ASP_MVC.Controllers;
+
+/// <summary>
+/// PoCトップ画面と共通ページを返すController。
+/// </summary>
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    public IActionResult Index()
     {
-        private readonly IUserRepository _userRepository;
+        return View();
+    }
 
-        public HomeController(IUserRepository userRepository)
-        {
-            _userRepository = userRepository;
-        }
+    public IActionResult Privacy()
+    {
+        return View();
+    }
 
-
-        public IActionResult Index()
-        {
-            var users = _userRepository.GetAll();
-            return View(users);
-        }
-
-        [HttpGet]
-        public IActionResult Create()
-        {
-            return View(new User());
-        }
-
-        [HttpPost]
-        public IActionResult Create(User? user)
-        {
-            if (user is null || string.IsNullOrWhiteSpace(user.UserName))
-            {
-                ModelState.AddModelError("UserName", "名前を入力してください。");
-                return View(user ?? new User());
-            }
-
-            user.UserName = user.UserName.Trim();
-            _userRepository.Add(user);
-            return RedirectToAction("Index");
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        public IActionResult Detail(int id)
-        {
-            return Content($"id = {id}");
-        }
-
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

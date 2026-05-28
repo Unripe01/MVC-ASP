@@ -102,6 +102,15 @@ public class UserRepository : IUserRepository
         });
     }
 
+    /// <summary>
+    /// 指定IDのユーザーを削除する。
+    /// </summary>
+    public void Delete(int id)
+    {
+        const string sql = "DELETE FROM Users WHERE Id = @Id;";
+        _connection.Execute(sql, new { Id = id });
+    }
+
     private int GetDefaultCompanyId()
     {
         var companyId = _connection.ExecuteScalar<int?>("SELECT Id FROM Companies ORDER BY Id LIMIT 1;");

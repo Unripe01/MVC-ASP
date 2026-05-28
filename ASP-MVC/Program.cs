@@ -20,6 +20,7 @@ builder.Services.AddScoped<ReportRendererService>();
 builder.Services.AddScoped<ReportXmlService>();
 builder.Services.AddScoped<TemplateRenderService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<MasterCrudService>();
 // SQLiteを使うので、AddDbContext ではなく、AddScoped で DbConnection を登録する
 builder.Services.AddScoped<IDbConnection>(_ =>
 {

@@ -17,6 +17,7 @@
     <Compile Update="Entities\Favorite.cs" />
     <Compile Update="Entities\ReportInstance.cs" />
     <Compile Update="Entities\User.cs" />
+    <Compile Update="Controllers\MasterController.cs" />
     <Compile Update="Controllers\ReportController.cs" />
     <Compile Update="Repository\CompanyRepository.cs" />
     <Compile Update="Repository\FavoriteRepository.cs" />
@@ -33,10 +34,19 @@
     <Compile Update="Reports\ReportValueFormatter.cs" />
     <Compile Update="Reports\UserFavoriteReportDefinition.cs" />
     <Compile Update="Services\ReportEngine.cs" />
+    <Compile Update="Services\MasterCrudService.cs" />
     <Compile Update="Services\ReportRendererService.cs" />
     <Compile Update="Services\ReportXmlService.cs" />
     <Compile Update="Services\TemplateRenderService.cs" />
     <Compile Update="Services\UserService.cs" />
+    <Compile Update="ViewModels\CrudCompanyInputViewModel.cs" />
+    <Compile Update="ViewModels\CrudCompanyPageViewModel.cs" />
+    <Compile Update="ViewModels\CrudFavoriteInputViewModel.cs" />
+    <Compile Update="ViewModels\CrudFavoriteListItemViewModel.cs" />
+    <Compile Update="ViewModels\CrudFavoritePageViewModel.cs" />
+    <Compile Update="ViewModels\CrudSelectOptionViewModel.cs" />
+    <Compile Update="ViewModels\CrudUserInputViewModel.cs" />
+    <Compile Update="ViewModels\CrudUserPageViewModel.cs" />
     <Compile Update="ViewModels\ReportFieldInputViewModel.cs" />
     <Compile Update="ViewModels\ReportPreviewViewModel.cs" />
     <Compile Update="ViewModels\ReportSelectOptionViewModel.cs" />
@@ -47,6 +57,9 @@
 
   <ItemGroup>
     <Content Update="Views\Report\UserFavorite.cshtml" />
+    <Content Update="Views\Master\Companies.cshtml" />
+    <Content Update="Views\Master\Favorites.cshtml" />
+    <Content Update="Views\Master\Users.cshtml" />
     <Content Update="Views\Report\_CompanyDialog.cshtml" />
     <Content Update="Views\Report\_ReportPreview.cshtml" />
     <Content Update="Views\Report\_ReportWorkspace.cshtml" />

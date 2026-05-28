@@ -1,6 +1,6 @@
 次に触るなら、優先度はこの順がよさそうです。
 
-Company / User / Favorite のCRUD画面を PoC責務境界に合わせて整える
+完了: Company / User / Favorite のCRUD画面を PoC責務境界に合わせて整える
 マスターダイアログ保存後に選択中Fieldへ確実に再反映する動きを強化する
 ReportDefinition のField定義からValidationも出せるようにする
 ReportInstance の保存履歴表示とXML復元を追加する

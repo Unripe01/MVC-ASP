@@ -14,4 +14,6 @@ public interface ICompanyRepository
     Company Add(Company company);
 
     void Update(Company company);
+
+    void Delete(int id);
 }

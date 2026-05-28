@@ -60,4 +60,13 @@ public class CompanyRepository : ICompanyRepository
 
         _connection.Execute(sql, company);
     }
+
+    /// <summary>
+    /// 指定IDの企業マスターを削除する。
+    /// </summary>
+    public void Delete(int id)
+    {
+        const string sql = "DELETE FROM Companies WHERE Id = @Id;";
+        _connection.Execute(sql, new { Id = id });
+    }
 }
