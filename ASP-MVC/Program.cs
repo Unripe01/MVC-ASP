@@ -78,11 +78,13 @@ static void EnsureDatabase(IDbConnection connection)
             UserId INTEGER NOT NULL,
             ReportType TEXT NOT NULL,
             XmlData TEXT NOT NULL,
-            CreatedAt TEXT NOT NULL
+            CreatedAt TEXT NOT NULL,
+            UpdatedAt TEXT NULL
         );
     ");
 
     EnsureUsersTable(connection);
+    EnsureReportInstancesTable(connection);
     SeedDatabase(connection);
 }
 
@@ -140,6 +142,22 @@ static void RebuildUsersTable(IDbConnection connection, IReadOnlySet<string> use
 
     connection.Execute("DROP TABLE Users;");
     connection.Execute("ALTER TABLE Users_Migrated RENAME TO Users;");
+}
+
+static void EnsureReportInstancesTable(IDbConnection connection)
+{
+    var reportInstanceColumns = connection.Query<string>("SELECT name FROM pragma_table_info('ReportInstances');")
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    if (!reportInstanceColumns.Contains("UpdatedAt"))
+    {
+        connection.Execute("ALTER TABLE ReportInstances ADD COLUMN UpdatedAt TEXT NULL;");
+    }
+
+    connection.Execute(@"
+        UPDATE ReportInstances
+        SET UpdatedAt = CreatedAt
+        WHERE UpdatedAt IS NULL;");
 }
 
 static void SeedDatabase(IDbConnection connection)

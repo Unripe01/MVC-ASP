@@ -64,7 +64,7 @@ public class ReportEngine
         var user = _userService.SaveUserFavorite(input);
         var xmlData = _xmlService.Serialize(user);
 
-        _reportInstanceRepository.Add(new ReportInstance
+        _reportInstanceRepository.Upsert(new ReportInstance
         {
             UserId = user.Id,
             ReportType = ReportType,

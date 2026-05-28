@@ -433,6 +433,7 @@ UserId INTEGER NOT NULL
 ReportType TEXT NOT NULL
 XmlData TEXT NOT NULL
 CreatedAt TEXT NOT NULL
+UpdatedAt TEXT NULL
 ```
 
 ---
@@ -495,7 +496,7 @@ FavoriteRepository.ReplaceForUser
   ↓
 ReportXmlService.Serialize
   ↓
-ReportInstanceRepository.Add
+ReportInstanceRepository.Upsert
   ↓
 Views/Report/_ReportWorkspace.cshtml
   ↓

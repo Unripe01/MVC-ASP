@@ -530,7 +530,11 @@ Mustache等は禁止。
 
 ## 目的
 
-帳票専用テーブル増殖を避ける。
+帳票専用テーブルを作成する。
+DB上では、ReportInstanceテーブル1つで全帳票を保存する。
+ユーザーID、帳票タイプ、XMLデータを保存する。
+履歴は持たず、同一ユーザー同一帳票であれば上書きする。
+
 
 ---
 
@@ -550,6 +554,7 @@ UserId
 ReportType
 XmlData
 CreatedAt
+UpdatedAt
 ```
 
 ---
