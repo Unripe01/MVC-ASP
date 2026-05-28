@@ -170,7 +170,11 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult SaveUserInfo(UserFavoriteReportPostViewModel input)
     {
-        var document = BuildInfoDocument(input);
+        var currentSnapshot = _reportDocumentService.GetLatestSnapshot(input.UserId, _userInfoReportDefinition.ReportKey);
+        var existingDocument = currentSnapshot is null
+            ? null
+            : RestoreUserInfoDocument(currentSnapshot.XmlData, input.UserId);
+        var document = BuildInfoDocument(input, existingDocument);
 
         var savedXmlData = _reportDocumentService.SaveSnapshot("UserInfo", input.UserId, document);
         var model = _reportDocumentService.BuildWorkspace(
@@ -255,11 +259,14 @@ public class ReportController : Controller
         };
     }
 
-    private static ReportDocument<User> BuildInfoDocument(UserFavoriteReportPostViewModel input)
+    private static ReportDocument<User> BuildInfoDocument(
+        UserFavoriteReportPostViewModel input,
+        ReportDocument<User>? existingDocument = null)
     {
-        return ReportDocument<User>.FromModel(
-            UserService.NormalizeReportUser(BuildInfoUser(input)),
-            BuildReportValues(input));
+        var document = existingDocument ?? ReportDocument<User>.FromModel(CreateEmptyUser(input.UserId));
+        document.Model = UserService.NormalizeReportUser(BuildInfoUser(input));
+        document.Values = MergeReportValues(document.Values, BuildReportValues(input));
+        return document;
     }
 
     private ReportDocument<User> RestoreUserInfoDocument(string? xmlData, int userId)
@@ -305,6 +312,33 @@ public class ReportController : Controller
             .ToList();
     }
 
+    private static List<ReportFieldValue> MergeReportValues(
+        IEnumerable<ReportFieldValue>? existingValues,
+        IReadOnlyList<ReportFieldValue> incomingValues)
+    {
+        var merged = (existingValues ?? [])
+            .Where(value => !string.IsNullOrWhiteSpace(value.Key))
+            .ToDictionary(value => value.Key, value => value.Value ?? "", StringComparer.OrdinalIgnoreCase);
+
+        foreach (var incoming in incomingValues)
+        {
+            if (string.IsNullOrWhiteSpace(incoming.Key))
+            {
+                continue;
+            }
+
+            merged[incoming.Key] = incoming.Value ?? "";
+        }
+
+        return merged
+            .Select(pair => new ReportFieldValue
+            {
+                Key = pair.Key,
+                Value = pair.Value
+            })
+            .ToList();
+    }
+
     private ReportWorkspaceViewModel FetchUserInfoMasterValues(UserFavoriteReportPostViewModel input)
     {
         var selectedFieldIds = ToSelectedFieldSet(input.SelectedFieldIds);
@@ -312,7 +346,7 @@ public class ReportController : Controller
         selectedFieldIds.IntersectWith(allowedFieldIds);
 
         var document = BuildInfoDocument(input);
-        var user = document.Model ?? CreateEmptyUser(input.UserId);
+        var user = _userService.GetUserGraph(input.UserId) ?? document.Model ?? CreateEmptyUser(input.UserId);
         var snapshot = _reportDocumentService.GetLatestSnapshot(input.UserId, _userInfoReportDefinition.ReportKey);
 
         if (selectedFieldIds.Count == 0)
@@ -327,11 +361,35 @@ public class ReportController : Controller
                 savedXmlData: snapshot?.XmlData ?? "");
         }
 
+        if (selectedFieldIds.Contains("UserName"))
+        {
+            document.Model!.UserName = user.UserName;
+        }
+
+        if (selectedFieldIds.Contains("Nationality"))
+        {
+            document.Model!.Nationality = user.Nationality;
+        }
+
+        if (selectedFieldIds.Contains("Age"))
+        {
+            document.Model!.Age = user.Age;
+        }
+
+        if (selectedFieldIds.Contains("BloodType"))
+        {
+            document.Model!.BloodType = user.BloodType;
+        }
+
+        if (selectedFieldIds.Contains("Birthday"))
+        {
+            document.Model!.Birthday = user.Birthday;
+        }
+
         if (selectedFieldIds.Contains("Company_CompanyName"))
         {
-            var company = _companyRepository.Get(input.CompanyId);
-            user.CompanyId = company?.Id ?? 0;
-            user.Company = company ?? new Company();
+            document.Model!.CompanyId = user.CompanyId;
+            document.Model!.Company = user.Company ?? new Company();
         }
 
         return _reportDocumentService.BuildWorkspace(

@@ -20,36 +20,41 @@ public class UserInfoReportDefinition : ReportDefinition<User>
         Template("user_info.txt");
 
         Field(user => user.UserName)
+            .FromMaster()
             .Label("名前")
             .Input("UserName")
             .AllowReverseReflect()
             .TemplateKey("User.UserName");
 
         Field(user => user.Nationality)
+            .FromMaster()
             .Label("国籍")
             .Input("Nationality")
             .AllowReverseReflect()
             .TemplateKey("User.Nationality");
 
         Field(user => user.Company!.CompanyName)
+            .FromMaster("Company")
             .Label("企業")
             .Input("CompanyId")
-            .FromMaster("Company")
             .AllowReverseReflect()
             .TemplateKey("Company.CompanyName");
 
         Field(user => user.Age)
+            .FromMaster()
             .Label("年齢")
             .Input("Age")
             .AllowReverseReflect()
             .TemplateKey("User.Age");
 
         Field(user => user.BloodType)
+            .FromMaster()
             .Label("血液型")
             .Input("BloodType")
             .TemplateKey("User.BloodType");
 
         Field(user => user.Birthday)
+            .FromMaster()
             .Label("生年月日")
             .Input("Birthday")
             .TemplateKey("User.Birthday");
