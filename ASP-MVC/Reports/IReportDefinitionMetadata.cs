@@ -11,7 +11,5 @@ public interface IReportDefinitionMetadata
 
     string? Summary { get; }
 
-    bool SupportsMasterActions { get; }
-
     string TemplateFileName { get; }
 }

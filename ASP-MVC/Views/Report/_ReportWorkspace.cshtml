@@ -4,6 +4,8 @@
     var saveAction = Model.ReportKey == "UserInfo" ? "SaveUserInfo" : "SaveUserFavorite";
     var previewAction = Model.ReportKey == "UserInfo" ? "PreviewUserInfo" : "PreviewUserFavorite";
     var exportAction = Model.ReportKey == "UserInfo" ? "ExportUserInfo" : "ExportUserFavorite";
+    var canFetchMaster = Model.Fields.Any(field => field.IsFromMaster);
+    var canReverseReflect = Model.Fields.Any(field => field.AllowReverseReflection);
 }
 
 <div id="reportWorkspace" class="report-grid">
@@ -22,6 +24,7 @@
               hx-post="@Url.Action(saveAction, "Report")"
               hx-target="#reportWorkspace"
               hx-swap="outerHTML">
+                        <input type="hidden" name="ReportKey" value="@Model.ReportKey" />
             <input type="hidden" name="UserId" value="@Model.UserId" />
 
             <div class="field-stack">
@@ -143,7 +146,7 @@
             </div>
 
                 <div class="form-actions">
-                @if (Model.SupportsMasterActions)
+                @if (canFetchMaster)
                 {
                     <button type="button"
                         class="btn btn-outline-primary"
@@ -151,6 +154,9 @@
                         hx-target="#reportWorkspace"
                         hx-swap="outerHTML"
                         hx-include="#reportForm">マスター取得</button>
+                }
+                @if (canReverseReflect)
+                {
                     <button type="button"
                         class="btn btn-outline-secondary"
                         hx-post="@Url.Action("ReverseReflect", "Report")"

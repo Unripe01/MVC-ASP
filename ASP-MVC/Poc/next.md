@@ -21,6 +21,6 @@ ReportInstance の保存履歴表示とXML復元を追加する
 
 - `GetUserGraph` は「マスター駆動の帳票」にだけ使う。すべての帳票で毎回グラフ生成する前提にしない
 - XML駆動の帳票は、保存済みXMLの deserialize を正として表示・出力する
-- `user_info` のようにマスター逆反映が不要な帳票は、ReportDefinition と共通の XML/Preview/Export 処理だけで成立させる
+- マスター取得対象か、逆反映対象かは `FieldDefinition` の metadata (`FromMaster` / `AllowReverseReflect`) で定義し、画面表示と処理可否をそこから決める
 - 新しい帳票は、まず ReportDefinition を追加し、特殊処理があるときだけ Resolver / Fetcher / ReverseReflector を足す
 - `働く場所` のような複数選択は、1:N を表現する Field と、必要最小限の特殊処理抽象を足す方針で扱う

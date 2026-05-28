@@ -5,6 +5,8 @@ namespace ASP_MVC.ViewModels;
 /// </summary>
 public class UserFavoriteReportPostViewModel
 {
+    public string ReportKey { get; set; } = "";
+
     public int UserId { get; set; }
 
     public int CompanyId { get; set; }

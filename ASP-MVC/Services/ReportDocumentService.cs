@@ -38,7 +38,6 @@ public class ReportDocumentService
         TModel model,
         string reportKey,
         string reportTitle,
-        bool supportsMasterActions,
         string? message = null,
         IEnumerable<string>? selectedFieldIds = null,
         string? savedXmlData = null,
@@ -53,7 +52,6 @@ public class ReportDocumentService
         {
             ReportKey = reportKey,
             ReportTitle = reportTitle,
-            SupportsMasterActions = supportsMasterActions,
             UserId = GetUserId(model),
             Fields = _rendererService.BuildFields(definition, model, companies, selected),
             PreviewText = previewTextOverride ?? _templateRenderService.Render(definition, model),

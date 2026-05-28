@@ -15,8 +15,7 @@ public class UserFavoriteReportDefinition : ReportDefinition<User>
         DefineReport(
             reportKey: "UserFavorite",
             displayTitle: "ユーザー好きなもの帳票",
-            summary: "ユーザーと好きなものを扱う帳票",
-            supportsMasterActions: true);
+            summary: "ユーザーと好きなものを扱う帳票");
 
         Template("user_favorite.txt");
 

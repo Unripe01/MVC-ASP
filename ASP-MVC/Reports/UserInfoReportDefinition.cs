@@ -15,30 +15,33 @@ public class UserInfoReportDefinition : ReportDefinition<User>
         DefineReport(
             reportKey: "UserInfo",
             displayTitle: "ユーザー情報帳票",
-            summary: "ユーザー基本情報を保存・出力する帳票",
-            supportsMasterActions: true);
+            summary: "ユーザー基本情報を保存・出力する帳票");
 
         Template("user_info.txt");
 
         Field(user => user.UserName)
             .Label("名前")
             .Input("UserName")
+            .AllowReverseReflect()
             .TemplateKey("User.UserName");
 
         Field(user => user.Nationality)
             .Label("国籍")
             .Input("Nationality")
+            .AllowReverseReflect()
             .TemplateKey("User.Nationality");
 
         Field(user => user.Company!.CompanyName)
             .Label("企業")
             .Input("CompanyId")
             .FromMaster("Company")
+            .AllowReverseReflect()
             .TemplateKey("Company.CompanyName");
 
         Field(user => user.Age)
             .Label("年齢")
             .Input("Age")
+            .AllowReverseReflect()
             .TemplateKey("User.Age");
 
         Field(user => user.BloodType)
@@ -50,5 +53,7 @@ public class UserInfoReportDefinition : ReportDefinition<User>
             .Label("生年月日")
             .Input("Birthday")
             .TemplateKey("User.Birthday");
+
+            
     }
 }

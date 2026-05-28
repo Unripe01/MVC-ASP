@@ -204,7 +204,6 @@ public class ReportEngine
         {
             ReportKey = _definition.ReportKey,
             ReportTitle = _definition.DisplayTitle,
-            SupportsMasterActions = _definition.SupportsMasterActions,
             UserId = normalizedUser.Id,
             Fields = _rendererService.BuildFields(_definition, normalizedUser, companies, selected),
             PreviewText = previewTextOverride ?? _templateRenderService.Render(_definition, normalizedUser),

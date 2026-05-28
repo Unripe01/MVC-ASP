@@ -9,8 +9,6 @@ public class ReportWorkspaceViewModel
 
     public string ReportTitle { get; set; } = "";
 
-    public bool SupportsMasterActions { get; set; }
-
     public int UserId { get; set; }
 
     public IReadOnlyList<ReportFieldInputViewModel> Fields { get; set; } = [];

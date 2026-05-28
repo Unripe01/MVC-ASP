@@ -22,8 +22,6 @@ public abstract class ReportDefinition<TModel> : IReportDefinitionMetadata
 
     public string? Summary { get; private set; }
 
-    public bool SupportsMasterActions { get; private set; }
-
     public IEnumerable<FieldDefinition> TemplateFields => _fields.Where(definitionField => definitionField.HasTemplateKey);
 
     public string TemplateFileName { get; private set; } = "";
@@ -44,12 +42,11 @@ public abstract class ReportDefinition<TModel> : IReportDefinitionMetadata
     /// <summary>
     /// 帳票一覧や画面タイトルに使うメタデータを定義する。
     /// </summary>
-    protected void DefineReport(string reportKey, string displayTitle, string? summary = null, bool supportsMasterActions = false)
+    protected void DefineReport(string reportKey, string displayTitle, string? summary = null)
     {
         ReportKey = reportKey;
         DisplayTitle = displayTitle;
         Summary = summary;
-        SupportsMasterActions = supportsMasterActions;
     }
 
     /// <summary>
