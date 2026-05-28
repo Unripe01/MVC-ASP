@@ -6,3 +6,4 @@
 年齢：{{User.Age}}
 血液型：{{User.BloodType}}
 生年月日：{{User.Birthday}}
+入国日：{{入国日}}

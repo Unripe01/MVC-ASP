@@ -20,7 +20,7 @@ UI / XML Snapshot / txt出力 / マスター連携 / 逆反映
 
 ## 現在の実装範囲
 
-実装済みの帳票は `UserFavorite` 帳票である。
+実装済みの帳票は `UserFavorite` 帳票と `UserInfo` 帳票である。
 
 対象Entity:
 
@@ -39,8 +39,10 @@ UI / XML Snapshot / txt出力 / マスター連携 / 逆反映
 - 入力値から右側txtプレビューを更新する
 - チェックした項目だけをマスターから取得する
 - チェックした項目だけを `User` / `Favorite` へ逆反映する
-- 帳票入力値をそのままXML serializeして `ReportInstances` に保存する
+- 帳票入力値をXML serializeして `ReportInstances` に保存する
+- Entityに存在しない帳票専用Fieldを `ReportDocument<TModel>.Values` としてXML Snapshotだけに保存する
 - `DocumentTemplates/user_favorite.txt` を単純文字列置換して `DocumentDownload` に出力する
+- `DocumentTemplates/user_info.txt` を単純文字列置換して `DocumentDownload` に出力する
 
 未実装または今後強化する領域:
 
@@ -156,8 +158,12 @@ DBアクセスだけを担当する。SQLとDapper呼び出しはこの層に閉
 - `ReportDefinition<TModel>`
 - `FieldDefinition`
 - `FieldDefinition<TModel, TValue>`
+- `ReportOnlyFieldDefinition`
+- `ReportDocument<TModel>`
+- `ReportFieldValue`
 - `ReportValueFormatter`
 - `UserFavoriteReportDefinition`
+- `UserInfoReportDefinition`
 - `FavoriteResolver`
 
 帳票定義例:
@@ -186,9 +192,15 @@ Field(user => user.Favorites)
   .ResolveWith<FavoriteResolver>()
   .TemplateKey("Favorite.FavoriteName")
   .JoinWith("、");
+
+Field("EntryDate")
+    .Label("入国日")
+    .TemplateKey("入国日");
 ```
 
 標準的な帳票では、txtテンプレートのプレースホルダはField定義の `TemplateKey` に定義する。UI、マスター取得、逆反映、txt差し込みの定義を同じFieldチェーンで読めるようにする。`TemplateRenderService` に帳票固有の `RenderXxx` メソッドを追加しない。
+
+EntityやマスターDBに存在せず、帳票XMLだけに保存する項目は `Field("FieldKey")` で定義する。これは `ReportOnlyFieldDefinition` として扱われ、POST時は `ReportValues[FieldKey]` にbindされ、XML Snapshotでは `ReportDocument<TModel>.Values` に保存される。`FromMaster()` や `AllowReverseReflect()` を付けない限り、マスター取得・マスター逆反映の対象にはならない。
 
 ---
 

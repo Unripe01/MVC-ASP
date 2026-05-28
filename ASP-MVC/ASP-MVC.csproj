@@ -27,7 +27,11 @@
     <Compile Update="Reports\FieldDefinition.cs" />
     <Compile Update="Reports\FieldDefinitionOfT.cs" />
     <Compile Update="Reports\IReportDefinitionMetadata.cs" />
+    <Compile Update="Reports\IReportFieldValueDocument.cs" />
     <Compile Update="Reports\ReportDefinition.cs" />
+    <Compile Update="Reports\ReportDocument.cs" />
+    <Compile Update="Reports\ReportFieldValue.cs" />
+    <Compile Update="Reports\ReportOnlyFieldDefinition.cs" />
     <Compile Update="Reports\ReportValueFormatter.cs" />
     <Compile Update="Reports\UserFavoriteReportDefinition.cs" />
     <Compile Update="Reports\UserInfoReportDefinition.cs" />

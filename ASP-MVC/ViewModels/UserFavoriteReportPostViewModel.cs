@@ -27,5 +27,7 @@ public class UserFavoriteReportPostViewModel
 
     public List<string> FavoriteNames { get; set; } = [];
 
+    public Dictionary<string, string> ReportValues { get; set; } = [];
+
     public List<string> SelectedFieldIds { get; set; } = [];
 }

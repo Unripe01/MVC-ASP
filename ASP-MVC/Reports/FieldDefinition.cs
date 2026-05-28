@@ -19,13 +19,15 @@ public abstract class FieldDefinition
 
     public string DisplayLabel { get; private set; }
 
-    public string InputName { get; private set; }
+    public string InputName { get; protected set; }
 
     public bool IsFromMaster { get; private set; }
 
     public bool AllowReverseReflection { get; private set; }
 
     public bool IsCollection { get; private set; }
+
+    public bool IsReportOnly { get; protected set; }
 
     public string? DialogUrl { get; private set; }
 
@@ -53,7 +55,7 @@ public abstract class FieldDefinition
     /// <summary>
     /// MVCのPOSTバインド名を帳票定義側で指定する。
     /// </summary>
-    public FieldDefinition Input(string inputName)
+    public virtual FieldDefinition Input(string inputName)
     {
         InputName = inputName;
         return this;

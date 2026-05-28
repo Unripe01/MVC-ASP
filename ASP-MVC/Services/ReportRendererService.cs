@@ -14,7 +14,7 @@ public class ReportRendererService
     /// </summary>
     public IReadOnlyList<ReportFieldInputViewModel> BuildFields<TModel>(
         ReportDefinition<TModel> definition,
-        TModel model,
+        object model,
         IReadOnlyList<Company> companies,
         IReadOnlySet<string>? selectedFieldIds = null)
     {
@@ -25,9 +25,9 @@ public class ReportRendererService
             .ToList();
     }
 
-    private static ReportFieldInputViewModel BuildField<TModel>(
+    private static ReportFieldInputViewModel BuildField(
         FieldDefinition field,
-        TModel model,
+        object model,
         IReadOnlyList<Company> companies,
         IReadOnlySet<string> selectedFieldIds)
     {
@@ -43,6 +43,7 @@ public class ReportRendererService
             ValueIds = BuildValueIds(field, model),
             Options = BuildOptions(field, model, companies),
             IsCollection = field.IsCollection,
+            IsReportOnly = field.IsReportOnly,
             IsFromMaster = field.IsFromMaster,
             AllowReverseReflection = field.AllowReverseReflection,
             IsSelected = selectedFieldIds.Contains(field.FieldId),
@@ -50,9 +51,9 @@ public class ReportRendererService
         };
     }
 
-    private static IReadOnlyList<int> BuildValueIds<TModel>(FieldDefinition field, TModel model)
+    private static IReadOnlyList<int> BuildValueIds(FieldDefinition field, object model)
     {
-        if (!field.IsCollection || field.PropertyPath != "Favorites" || model is not User user)
+        if (!field.IsCollection || field.PropertyPath != "Favorites" || TryGetUser(model) is not { } user)
         {
             return [];
         }
@@ -60,12 +61,12 @@ public class ReportRendererService
         return user.Favorites.Select(favorite => favorite.Id).ToList();
     }
 
-    private static IReadOnlyList<ReportSelectOptionViewModel> BuildOptions<TModel>(
+    private static IReadOnlyList<ReportSelectOptionViewModel> BuildOptions(
         FieldDefinition field,
-        TModel model,
+        object model,
         IReadOnlyList<Company> companies)
     {
-        if (field.MasterSource != "Company" || model is not User user)
+        if (field.MasterSource != "Company" || TryGetUser(model) is not { } user)
         {
             return [];
         }
@@ -77,5 +78,15 @@ public class ReportRendererService
                 Selected = company.Id == user.CompanyId
             })
             .ToList();
+    }
+
+    private static User? TryGetUser(object model)
+    {
+        return model switch
+        {
+            User user => user,
+            ReportDocument<User> document => document.Model,
+            _ => null
+        };
     }
 }

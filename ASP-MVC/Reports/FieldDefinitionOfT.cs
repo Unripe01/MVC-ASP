@@ -18,6 +18,11 @@ public sealed class FieldDefinition<TModel, TValue> : FieldDefinition
     /// </summary>
     public override object? ReadValue(object model)
     {
+        if (model is ReportDocument<TModel> document)
+        {
+            return document.Model is null ? null : _getter(document.Model);
+        }
+
         return model is TModel typedModel ? _getter(typedModel) : null;
     }
 }

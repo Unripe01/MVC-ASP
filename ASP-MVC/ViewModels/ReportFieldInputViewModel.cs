@@ -25,6 +25,8 @@ public class ReportFieldInputViewModel
 
     public bool IsCollection { get; set; }
 
+    public bool IsReportOnly { get; set; }
+
     public bool IsFromMaster { get; set; }
 
     public bool AllowReverseReflection { get; set; }

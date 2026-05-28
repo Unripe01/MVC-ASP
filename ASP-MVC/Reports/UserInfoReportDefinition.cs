@@ -54,6 +54,8 @@ public class UserInfoReportDefinition : ReportDefinition<User>
             .Input("Birthday")
             .TemplateKey("User.Birthday");
 
-            
+        Field("EntryDate")
+            .Label("入国日")
+            .TemplateKey("入国日");
     }
 }

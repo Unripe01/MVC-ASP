@@ -17,7 +17,7 @@ public class TemplateRenderService
     /// <summary>
     /// ReportDefinitionのレンダーキーに従ってtxtプレビュー文字列を生成する。
     /// </summary>
-    public string Render<TModel>(ReportDefinition<TModel> definition, TModel model)
+    public string Render<TModel>(ReportDefinition<TModel> definition, object model)
     {
         ArgumentNullException.ThrowIfNull(definition);
         ArgumentNullException.ThrowIfNull(model);
@@ -35,7 +35,7 @@ public class TemplateRenderService
     /// <summary>
     /// txtテンプレート差し込み結果をDocumentDownloadへ保存する。
     /// </summary>
-    public string Write<TModel>(ReportDefinition<TModel> definition, TModel model, string fileName)
+    public string Write<TModel>(ReportDefinition<TModel> definition, object model, string fileName)
     {
         var output = Render(definition, model);
         var outputDirectory = Path.Combine(_environment.ContentRootPath, "DocumentDownload");

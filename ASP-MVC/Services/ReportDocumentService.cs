@@ -35,7 +35,7 @@ public class ReportDocumentService
     /// </summary>
     public ReportWorkspaceViewModel BuildWorkspace<TModel>(
         ReportDefinition<TModel> definition,
-        TModel model,
+        object model,
         string reportKey,
         string reportTitle,
         string? message = null,
@@ -81,7 +81,7 @@ public class ReportDocumentService
     /// <summary>
     /// 保存前の入力値からtxtプレビューを生成する。
     /// </summary>
-    public string RenderPreview<TModel>(ReportDefinition<TModel> definition, TModel model)
+    public string RenderPreview<TModel>(ReportDefinition<TModel> definition, object model)
     {
         return _templateRenderService.Render(definition, model);
     }
@@ -105,16 +105,21 @@ public class ReportDocumentService
     /// <summary>
     /// txtテンプレートの差し込み結果をDocumentDownloadへ出力する。
     /// </summary>
-    public string Write<TModel>(ReportDefinition<TModel> definition, TModel model, string fileName)
+    public string Write<TModel>(ReportDefinition<TModel> definition, object model, string fileName)
     {
         return _templateRenderService.Write(definition, model, fileName);
     }
 
-    private static int GetUserId<TModel>(TModel model)
+    private static int GetUserId(object model)
     {
         if (model is User user)
         {
             return user.Id;
+        }
+
+        if (model is ReportDocument<User> document && document.Model is not null)
+        {
+            return document.Model.Id;
         }
 
         return 0;

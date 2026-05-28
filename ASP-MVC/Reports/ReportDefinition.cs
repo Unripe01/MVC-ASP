@@ -60,6 +60,16 @@ public abstract class ReportDefinition<TModel> : IReportDefinitionMetadata
         return field;
     }
 
+    /// <summary>
+    /// Entityには存在せず、帳票XMLだけに保存する入力Fieldを登録する。
+    /// </summary>
+    protected FieldDefinition Field(string fieldKey)
+    {
+        var field = new ReportOnlyFieldDefinition(fieldKey);
+        _fields.Add(field);
+        return field;
+    }
+
     private static string GetPropertyPath(Expression expression)
     {
         var members = new Stack<string>();

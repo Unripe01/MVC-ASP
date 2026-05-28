@@ -64,15 +64,11 @@ public class ReportController : Controller
     public IActionResult UserInfo(int id = 1)
     {
         var snapshot = _reportDocumentService.GetLatestSnapshot(id, "UserInfo");
-        var user = snapshot is null
-            ? CreateEmptyUser(id)
-            : _reportDocumentService.Deserialize<User>(snapshot.XmlData) ?? CreateEmptyUser(id);
-
-        user = UserService.NormalizeReportUser(user);
+        var document = RestoreUserInfoDocument(snapshot?.XmlData, id);
 
         var model = _reportDocumentService.BuildWorkspace(
             _userInfoReportDefinition,
-            user,
+            document,
             reportKey: _userInfoReportDefinition.ReportKey,
             reportTitle: _userInfoReportDefinition.DisplayTitle,
             savedXmlData: snapshot?.XmlData ?? "");
@@ -174,12 +170,12 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult SaveUserInfo(UserFavoriteReportPostViewModel input)
     {
-        var user = UserService.NormalizeReportUser(BuildInfoUser(input));
+        var document = BuildInfoDocument(input);
 
-        var savedXmlData = _reportDocumentService.SaveSnapshot("UserInfo", input.UserId, user);
+        var savedXmlData = _reportDocumentService.SaveSnapshot("UserInfo", input.UserId, document);
         var model = _reportDocumentService.BuildWorkspace(
             _userInfoReportDefinition,
-            user,
+            document,
             reportKey: _userInfoReportDefinition.ReportKey,
             reportTitle: _userInfoReportDefinition.DisplayTitle,
             message: "XMLを保存しました",
@@ -194,11 +190,11 @@ public class ReportController : Controller
     [HttpPost]
     public IActionResult PreviewUserInfo(UserFavoriteReportPostViewModel input)
     {
-        var user = BuildInfoUser(input);
+        var document = BuildInfoDocument(input);
 
         var model = new ReportPreviewViewModel
         {
-            PreviewText = _reportDocumentService.RenderPreview(_userInfoReportDefinition, user)
+            PreviewText = _reportDocumentService.RenderPreview(_userInfoReportDefinition, document)
         };
 
         return PartialView("_ReportPreview", model);
@@ -213,16 +209,14 @@ public class ReportController : Controller
         var snapshot = _reportDocumentService.GetLatestSnapshot(userId, "UserInfo")
             ?? throw new InvalidOperationException("出力対象の保存済み帳票が見つかりません。");
 
-        var user = _reportDocumentService.Deserialize<User>(snapshot.XmlData)
-            ?? throw new InvalidOperationException("保存済み帳票のXMLを復元できません。");
-
-        user = UserService.NormalizeReportUser(user);
+        var document = RestoreUserInfoDocument(snapshot.XmlData, userId);
+        var user = document.Model ?? CreateEmptyUser(userId);
         var fileName = $"{Guid.NewGuid():N}-user-info-{user.Id}.txt";
-        _reportDocumentService.Write(_userInfoReportDefinition, user, fileName);
+        _reportDocumentService.Write(_userInfoReportDefinition, document, fileName);
 
         var model = _reportDocumentService.BuildWorkspace(
             _userInfoReportDefinition,
-            user,
+            document,
             reportKey: _userInfoReportDefinition.ReportKey,
             reportTitle: _userInfoReportDefinition.DisplayTitle,
             message: $"{fileName} を出力しました",
@@ -261,20 +255,71 @@ public class ReportController : Controller
         };
     }
 
+    private static ReportDocument<User> BuildInfoDocument(UserFavoriteReportPostViewModel input)
+    {
+        return ReportDocument<User>.FromModel(
+            UserService.NormalizeReportUser(BuildInfoUser(input)),
+            BuildReportValues(input));
+    }
+
+    private ReportDocument<User> RestoreUserInfoDocument(string? xmlData, int userId)
+    {
+        if (string.IsNullOrWhiteSpace(xmlData))
+        {
+            return ReportDocument<User>.FromModel(CreateEmptyUser(userId));
+        }
+
+        var document = TryDeserializeUserInfoDocument(xmlData);
+        if (document?.Model is not null)
+        {
+            document.Model = UserService.NormalizeReportUser(document.Model);
+            document.Values ??= [];
+            return document;
+        }
+
+        var legacyUser = _reportDocumentService.Deserialize<User>(xmlData) ?? CreateEmptyUser(userId);
+        return ReportDocument<User>.FromModel(UserService.NormalizeReportUser(legacyUser));
+    }
+
+    private ReportDocument<User>? TryDeserializeUserInfoDocument(string xmlData)
+    {
+        try
+        {
+            return _reportDocumentService.Deserialize<ReportDocument<User>>(xmlData);
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    private static IReadOnlyList<ReportFieldValue> BuildReportValues(UserFavoriteReportPostViewModel input)
+    {
+        return input.ReportValues
+            .Where(value => !string.IsNullOrWhiteSpace(value.Key))
+            .Select(value => new ReportFieldValue
+            {
+                Key = value.Key,
+                Value = value.Value ?? ""
+            })
+            .ToList();
+    }
+
     private ReportWorkspaceViewModel FetchUserInfoMasterValues(UserFavoriteReportPostViewModel input)
     {
         var selectedFieldIds = ToSelectedFieldSet(input.SelectedFieldIds);
         var allowedFieldIds = ToAllowedFieldSet(_userInfoReportDefinition, field => field.IsFromMaster);
         selectedFieldIds.IntersectWith(allowedFieldIds);
 
-        var user = UserService.NormalizeReportUser(BuildInfoUser(input));
+        var document = BuildInfoDocument(input);
+        var user = document.Model ?? CreateEmptyUser(input.UserId);
         var snapshot = _reportDocumentService.GetLatestSnapshot(input.UserId, _userInfoReportDefinition.ReportKey);
 
         if (selectedFieldIds.Count == 0)
         {
             return _reportDocumentService.BuildWorkspace(
                 _userInfoReportDefinition,
-                user,
+                document,
                 reportKey: _userInfoReportDefinition.ReportKey,
                 reportTitle: _userInfoReportDefinition.DisplayTitle,
                 message: "マスター取得対象を選択してください",
@@ -291,7 +336,7 @@ public class ReportController : Controller
 
         return _reportDocumentService.BuildWorkspace(
             _userInfoReportDefinition,
-            user,
+            document,
             reportKey: _userInfoReportDefinition.ReportKey,
             reportTitle: _userInfoReportDefinition.DisplayTitle,
             message: "選択項目をマスターから取得しました",
@@ -305,14 +350,15 @@ public class ReportController : Controller
         var allowedFieldIds = ToAllowedFieldSet(_userInfoReportDefinition, field => field.AllowReverseReflection);
         selectedFieldIds.IntersectWith(allowedFieldIds);
 
-        var user = UserService.NormalizeReportUser(BuildInfoUser(input));
+        var document = BuildInfoDocument(input);
+        var user = document.Model ?? CreateEmptyUser(input.UserId);
         var snapshot = _reportDocumentService.GetLatestSnapshot(input.UserId, _userInfoReportDefinition.ReportKey);
 
         if (selectedFieldIds.Count == 0)
         {
             return _reportDocumentService.BuildWorkspace(
                 _userInfoReportDefinition,
-                user,
+                document,
                 reportKey: _userInfoReportDefinition.ReportKey,
                 reportTitle: _userInfoReportDefinition.DisplayTitle,
                 message: "逆反映対象を選択してください",
@@ -321,10 +367,11 @@ public class ReportController : Controller
         }
 
         var reflectedUser = UserService.NormalizeReportUser(_userService.ReverseReflect(user, selectedFieldIds));
+        document.Model = reflectedUser;
 
         return _reportDocumentService.BuildWorkspace(
             _userInfoReportDefinition,
-            reflectedUser,
+            document,
             reportKey: _userInfoReportDefinition.ReportKey,
             reportTitle: _userInfoReportDefinition.DisplayTitle,
             message: "選択項目をマスターへ逆反映しました",
