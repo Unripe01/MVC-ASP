@@ -25,6 +25,17 @@
                         <div class="field-label-row">
                             <label class="form-label" for="@field.FieldId">@field.Label</label>
                             <div class="field-badges">
+                                @if (field.IsFromMaster || field.AllowReverseReflection)
+                                {
+                                    <label class="form-check-label d-flex align-items-center gap-1">
+                                        <input class="form-check-input mt-0"
+                                               type="checkbox"
+                                               name="SelectedFieldIds"
+                                               value="@field.FieldId"
+                                               checked="@field.IsSelected" />
+                                        対象
+                                    </label>
+                                }
                                 @if (field.IsFromMaster)
                                 {
                                     <span>Master</span>
@@ -39,14 +50,16 @@
                         @if (field.IsCollection)
                         {
                             var values = field.Values.Any() ? field.Values : new[] { "" };
+                            var valueIds = field.ValueIds.Any() ? field.ValueIds : new[] { 0 };
 
                             <div x-data="{ extraRows: [] }" class="collection-field">
-                                @foreach (var value in values)
+                                @for (var index = 0; index < values.Count(); index++)
                                 {
                                     <div class="collection-row">
+                                        <input type="hidden" name="FavoriteIds" value="@valueIds.ElementAtOrDefault(index)" />
                                         <input class="form-control"
                                                name="@field.InputName"
-                                               value="@value"
+                                               value="@values.ElementAt(index)"
                                                autocomplete="off"
                                                hx-post="@Url.Action("PreviewUserFavorite", "Report")"
                                                hx-target="#previewRegion"
@@ -59,6 +72,7 @@
 
                                 <template x-for="row in extraRows" :key="row">
                                     <div class="collection-row">
+                                        <input type="hidden" name="FavoriteIds" value="0" />
                                         <input class="form-control"
                                                name="@field.InputName"
                                                autocomplete="off"
@@ -90,6 +104,7 @@
                                         <option value="@option.Value" selected="@option.Selected">@option.Text</option>
                                     }
                                 </select>
+                                <input type="hidden" name="CompanyName" value="@field.HiddenValue" />
 
                                 @if (!string.IsNullOrWhiteSpace(field.DialogUrl))
                                 {
@@ -122,6 +137,18 @@
             </div>
 
             <div class="form-actions">
+                <button type="button"
+                        class="btn btn-outline-primary"
+                        hx-post="@Url.Action("FetchMasterValues", "Report")"
+                        hx-target="#reportWorkspace"
+                        hx-swap="outerHTML"
+                        hx-include="#reportForm">マスター取得</button>
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        hx-post="@Url.Action("ReverseReflect", "Report")"
+                        hx-target="#reportWorkspace"
+                        hx-swap="outerHTML"
+                        hx-include="#reportForm">マスター逆反映</button>
                 <button type="submit" class="btn btn-primary">XML保存</button>
             </div>
         </form>

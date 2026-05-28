@@ -15,7 +15,11 @@ public class ReportFieldInputViewModel
 
     public string Value { get; set; } = "";
 
+    public string HiddenValue { get; set; } = "";
+
     public IReadOnlyList<string> Values { get; set; } = [];
+
+    public IReadOnlyList<int> ValueIds { get; set; } = [];
 
     public IReadOnlyList<ReportSelectOptionViewModel> Options { get; set; } = [];
 
@@ -24,6 +28,8 @@ public class ReportFieldInputViewModel
     public bool IsFromMaster { get; set; }
 
     public bool AllowReverseReflection { get; set; }
+
+    public bool IsSelected { get; set; }
 
     public string? DialogUrl { get; set; }
 }

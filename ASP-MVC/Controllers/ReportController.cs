@@ -51,6 +51,26 @@ public class ReportController : Controller
     }
 
     /// <summary>
+    /// 選択された項目だけをマスターから取得して帳票へ反映する。
+    /// </summary>
+    [HttpPost]
+    public IActionResult FetchMasterValues(UserFavoriteReportPostViewModel input)
+    {
+        var model = _reportEngine.FetchMasterValues(input);
+        return PartialView("_ReportWorkspace", model);
+    }
+
+    /// <summary>
+    /// 選択された項目だけをマスターへ逆反映する。
+    /// </summary>
+    [HttpPost]
+    public IActionResult ReverseReflect(UserFavoriteReportPostViewModel input)
+    {
+        var model = _reportEngine.ReverseReflect(input);
+        return PartialView("_ReportWorkspace", model);
+    }
+
+    /// <summary>
     /// 企業マスター編集ダイアログを部分表示する。
     /// </summary>
     [HttpGet]

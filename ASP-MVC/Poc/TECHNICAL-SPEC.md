@@ -35,9 +35,11 @@ UI / XML Snapshot / txt出力 / マスター連携 / 逆反映
 - 帳票定義の `Field(...).TemplateKey(...)` からtxt差し込みを実行する
 - `Company` マスターを選択肢として表示する
 - 帳票入力中に会社マスター編集ダイアログを開く
+- 保存済みXML Snapshotをdeserializeして帳票画面の初期値として表示する
 - 入力値から右側txtプレビューを更新する
-- 入力値を `User` / `Favorite` へ逆反映する
-- `User` EntityグラフをXML serializeして `ReportInstances` に保存する
+- チェックした項目だけをマスターから取得する
+- チェックした項目だけを `User` / `Favorite` へ逆反映する
+- 帳票入力値をそのままXML serializeして `ReportInstances` に保存する
 - `DocumentTemplates/user_favorite.txt` を単純文字列置換して `DocumentDownload` に出力する
 
 未実装または今後強化する領域:
@@ -449,15 +451,15 @@ ReportController.UserFavorite
   ↓
 ReportEngine.BuildUserFavoriteReport
   ↓
-UserService.GetUserGraph
+ReportInstanceRepository.GetLatest
+  ↓
+ReportXmlService.Deserialize
   ↓
 ReportRendererService.BuildFields
   ↓
 TemplateRenderService.Render
   ↓
 ReportDefinition.TemplateFields
-  ↓
-ReportXmlService.Serialize
   ↓
 Views/Report/UserFavorite.cshtml
 ```
@@ -480,7 +482,7 @@ Views/Report/_ReportPreview.cshtml
 #previewRegion 差し替え
 ```
 
-### XML保存と逆反映
+### XML保存
 
 ```text
 XML保存ボタン
@@ -489,12 +491,56 @@ POST /Report/SaveUserFavorite
   ↓
 ReportEngine.SaveUserFavoriteReport
   ↓
-UserService.SaveUserFavorite
+UserService.BuildReportUser
+  ↓
+ReportXmlService.Serialize
+  ↓
+ReportInstanceRepository.Upsert
+  ↓
+Views/Report/_ReportWorkspace.cshtml
+  ↓
+#reportWorkspace 差し替え
+```
+
+### マスター取得
+
+```text
+対象Fieldにチェック
+  ↓
+マスター取得ボタン
+  ↓ htmx
+POST /Report/FetchMasterValues
+  ↓
+ReportEngine.FetchMasterValues
+  ↓
+UserService.GetUserGraph / CompanyRepository.Get
+  ↓
+選択項目だけ帳票モデルへ反映
+  ↓
+ReportInstanceRepository.Upsert
+  ↓
+Views/Report/_ReportWorkspace.cshtml
+  ↓
+#reportWorkspace 差し替え
+```
+
+### マスター逆反映
+
+```text
+対象Fieldにチェック
+  ↓
+マスター逆反映ボタン
+  ↓ htmx
+POST /Report/ReverseReflect
+  ↓
+ReportEngine.ReverseReflect
+  ↓
+UserService.ReverseReflect
   ↓
 UserRepository.Update / Add
 FavoriteRepository.ReplaceForUser
   ↓
-ReportXmlService.Serialize
+反映後のマスター値を帳票モデルへ戻す
   ↓
 ReportInstanceRepository.Upsert
   ↓

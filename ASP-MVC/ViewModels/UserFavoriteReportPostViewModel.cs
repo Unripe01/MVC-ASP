@@ -9,7 +9,13 @@ public class UserFavoriteReportPostViewModel
 
     public int CompanyId { get; set; }
 
+    public string CompanyName { get; set; } = "";
+
     public string UserName { get; set; } = "";
 
+    public List<int> FavoriteIds { get; set; } = [];
+
     public List<string> FavoriteNames { get; set; } = [];
+
+    public List<string> SelectedFieldIds { get; set; } = [];
 }

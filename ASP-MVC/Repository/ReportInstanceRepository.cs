@@ -81,6 +81,25 @@ public class ReportInstanceRepository
     }
 
     /// <summary>
+    /// ユーザーと帳票種別に対応する最新の保存済みXMLを取得する。
+    /// </summary>
+    public ReportInstance? GetLatest(int userId, string reportType)
+    {
+        const string sql = @"
+            SELECT Id, UserId, ReportType, XmlData, CreatedAt, UpdatedAt
+            FROM ReportInstances
+            WHERE UserId = @UserId AND ReportType = @ReportType
+            ORDER BY COALESCE(UpdatedAt, CreatedAt) DESC, Id DESC
+            LIMIT 1;";
+
+        return _connection.QuerySingleOrDefault<ReportInstance>(sql, new
+        {
+            UserId = userId,
+            ReportType = reportType
+        });
+    }
+
+    /// <summary>
     /// ユーザーに紐づく保存済み帳票スナップショットを取得する。
     /// </summary>
     public List<ReportInstance> GetByUserId(int userId)

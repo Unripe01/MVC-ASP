@@ -11,6 +11,7 @@ namespace ASP_MVC.Services;
 public class ReportEngine
 {
     private const string ReportType = "UserFavorite";
+    private static readonly StringComparer FieldComparer = StringComparer.OrdinalIgnoreCase;
 
     private readonly UserFavoriteReportDefinition _definition;
     private readonly CompanyRepository _companyRepository;
@@ -43,17 +44,14 @@ public class ReportEngine
     /// </summary>
     public UserFavoriteReportViewModel BuildUserFavoriteReport(int userId, string? message = null)
     {
-        var companies = _companyRepository.GetAll();
-        var user = _userService.GetUserGraph(userId) ?? CreateEmptyUser(userId, companies.FirstOrDefault());
-
-        return new UserFavoriteReportViewModel
+        var snapshot = _reportInstanceRepository.GetLatest(userId, ReportType);
+        if (snapshot is null)
         {
-            UserId = user.Id,
-            Fields = _rendererService.BuildFields(_definition, user, companies),
-            PreviewText = _templateRenderService.Render(_definition, user),
-            XmlData = _xmlService.Serialize(user),
-            Message = message
-        };
+            return BuildWorkspace(CreateEmptyUser(userId), message, savedXmlData: "", previewTextOverride: "");
+        }
+
+        var user = UserService.NormalizeReportUser(_xmlService.Deserialize<User>(snapshot.XmlData) ?? CreateEmptyUser(userId));
+        return BuildWorkspace(user, message, savedXmlData: snapshot.XmlData);
     }
 
     /// <summary>
@@ -61,18 +59,9 @@ public class ReportEngine
     /// </summary>
     public UserFavoriteReportViewModel SaveUserFavoriteReport(UserFavoriteReportPostViewModel input)
     {
-        var user = _userService.SaveUserFavorite(input);
-        var xmlData = _xmlService.Serialize(user);
-
-        _reportInstanceRepository.Upsert(new ReportInstance
-        {
-            UserId = user.Id,
-            ReportType = ReportType,
-            XmlData = xmlData,
-            CreatedAt = DateTime.UtcNow
-        });
-
-        return BuildUserFavoriteReport(user.Id, "保存しました");
+        var user = UserService.NormalizeReportUser(_userService.BuildReportUser(input));
+        SaveSnapshot(user);
+        return BuildWorkspace(user, "XMLを保存しました", input.SelectedFieldIds);
     }
 
     /// <summary>
@@ -80,8 +69,77 @@ public class ReportEngine
     /// </summary>
     public string RenderPreview(UserFavoriteReportPostViewModel input)
     {
-        var user = _userService.BuildTransientUser(input);
+        var user = UserService.NormalizeReportUser(_userService.BuildReportUser(input));
         return _templateRenderService.Render(_definition, user);
+    }
+
+    /// <summary>
+    /// 選択された項目だけをマスターから取得して帳票XMLへ反映する。
+    /// </summary>
+    public UserFavoriteReportViewModel FetchMasterValues(UserFavoriteReportPostViewModel input)
+    {
+        var selectedFieldIds = ToSelectedFieldSet(input.SelectedFieldIds);
+        var user = UserService.NormalizeReportUser(_userService.BuildReportUser(input));
+        var currentSnapshot = _reportInstanceRepository.GetLatest(input.UserId, ReportType);
+
+        if (selectedFieldIds.Count == 0)
+        {
+            return BuildWorkspace(user, "マスター取得対象を選択してください", input.SelectedFieldIds, currentSnapshot?.XmlData);
+        }
+
+        var masterUser = input.UserId == 0 ? null : _userService.GetUserGraph(input.UserId);
+
+        if (selectedFieldIds.Contains("UserName") && masterUser is not null)
+        {
+            user.UserName = masterUser.UserName;
+        }
+
+        if (selectedFieldIds.Contains("Company_CompanyName"))
+        {
+            var company = ResolveCompanyForFetch(input.CompanyId, masterUser);
+            user.CompanyId = company?.Id ?? 0;
+            user.Company = company is null
+                ? new Company()
+                : new Company
+                {
+                    Id = company.Id,
+                    CompanyName = company.CompanyName
+                };
+        }
+
+        if (selectedFieldIds.Contains("Favorites") && masterUser is not null)
+        {
+            user.Favorites = masterUser.Favorites
+                .Select(favorite => new Favorite
+                {
+                    Id = favorite.Id,
+                    UserId = favorite.UserId,
+                    FavoriteName = favorite.FavoriteName
+                })
+                .ToList();
+        }
+
+        return BuildWorkspace(user, "選択項目をマスターから取得しました", input.SelectedFieldIds, currentSnapshot?.XmlData);
+    }
+
+    /// <summary>
+    /// 選択された項目だけをマスターへ逆反映し、反映結果をXMLへ戻す。
+    /// </summary>
+    public UserFavoriteReportViewModel ReverseReflect(UserFavoriteReportPostViewModel input)
+    {
+        var selectedFieldIds = ToSelectedFieldSet(input.SelectedFieldIds);
+        var user = UserService.NormalizeReportUser(_userService.BuildReportUser(input));
+        var currentSnapshot = _reportInstanceRepository.GetLatest(input.UserId, ReportType);
+
+        if (selectedFieldIds.Count == 0)
+        {
+            return BuildWorkspace(user, "逆反映対象を選択してください", input.SelectedFieldIds, currentSnapshot?.XmlData);
+        }
+
+        var reflectedUser = UserService.NormalizeReportUser(_userService.ReverseReflect(user, selectedFieldIds));
+        var mergedUser = MergeReflectedFields(user, reflectedUser, selectedFieldIds);
+
+        return BuildWorkspace(mergedUser, "選択項目をマスターへ逆反映しました", input.SelectedFieldIds, currentSnapshot?.XmlData);
     }
 
     /// <summary>
@@ -89,7 +147,9 @@ public class ReportEngine
     /// </summary>
     public string ExportUserFavoriteText(int userId)
     {
-        var user = _userService.GetUserGraph(userId) ?? throw new InvalidOperationException("出力対象のユーザーが見つかりません。");
+        var snapshot = _reportInstanceRepository.GetLatest(userId, ReportType)
+            ?? throw new InvalidOperationException("出力対象の保存済み帳票が見つかりません。");
+        var user = UserService.NormalizeReportUser(_xmlService.Deserialize<User>(snapshot.XmlData) ?? throw new InvalidOperationException("保存済み帳票のXMLを復元できません。"));
         var fileName = $"{Guid.NewGuid():N}-user-{user.Id}.txt";
         return _templateRenderService.Write(_definition, user, fileName);
     }
@@ -129,13 +189,96 @@ public class ReportEngine
         _companyRepository.Update(company);
     }
 
-    private static User CreateEmptyUser(int userId, Company? company)
+    private UserFavoriteReportViewModel BuildWorkspace(
+        User user,
+        string? message = null,
+        IEnumerable<string>? selectedFieldIds = null,
+        string? savedXmlData = null,
+        string? previewTextOverride = null)
+    {
+        var normalizedUser = UserService.NormalizeReportUser(user);
+        var companies = _companyRepository.GetAll();
+        var selected = ToSelectedFieldSet(selectedFieldIds);
+
+        return new UserFavoriteReportViewModel
+        {
+            UserId = normalizedUser.Id,
+            Fields = _rendererService.BuildFields(_definition, normalizedUser, companies, selected),
+            PreviewText = previewTextOverride ?? _templateRenderService.Render(_definition, normalizedUser),
+            XmlData = savedXmlData ?? "",
+            Message = message
+        };
+    }
+
+    private void SaveSnapshot(User user)
+    {
+        var xmlData = _xmlService.Serialize(user);
+
+        _reportInstanceRepository.Upsert(new ReportInstance
+        {
+            UserId = user.Id,
+            ReportType = ReportType,
+            XmlData = xmlData,
+            CreatedAt = DateTime.UtcNow
+        });
+    }
+
+    private static User MergeReflectedFields(User sourceUser, User reflectedUser, IReadOnlySet<string> selectedFieldIds)
+    {
+        var mergedUser = UserService.NormalizeReportUser(sourceUser);
+
+        if (selectedFieldIds.Contains("UserName"))
+        {
+            mergedUser.UserName = reflectedUser.UserName;
+        }
+
+        if (selectedFieldIds.Contains("Company_CompanyName"))
+        {
+            mergedUser.CompanyId = reflectedUser.CompanyId;
+            mergedUser.Company = reflectedUser.Company ?? new Company();
+        }
+
+        if (selectedFieldIds.Contains("Favorites"))
+        {
+            mergedUser.Favorites = reflectedUser.Favorites;
+        }
+
+        if (mergedUser.Id == 0)
+        {
+            mergedUser.Id = reflectedUser.Id;
+        }
+
+        return mergedUser;
+    }
+
+    private Company? ResolveCompanyForFetch(int companyId, User? masterUser)
+    {
+        if (companyId != 0)
+        {
+            return _companyRepository.Get(companyId);
+        }
+
+        if (masterUser?.Company is null)
+        {
+            return null;
+        }
+
+        return _companyRepository.Get(masterUser.CompanyId) ?? masterUser.Company;
+    }
+
+    private static HashSet<string> ToSelectedFieldSet(IEnumerable<string>? selectedFieldIds)
+    {
+        return selectedFieldIds is null
+            ? new HashSet<string>(FieldComparer)
+            : new HashSet<string>(selectedFieldIds.Where(value => !string.IsNullOrWhiteSpace(value)), FieldComparer);
+    }
+
+    private static User CreateEmptyUser(int userId)
     {
         return new User
         {
             Id = userId,
-            CompanyId = company?.Id ?? 0,
-            Company = company,
+            Company = new Company(),
             Favorites = []
         };
     }

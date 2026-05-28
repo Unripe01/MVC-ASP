@@ -25,6 +25,7 @@ public class UserFavoriteReportDefinition : ReportDefinition<User>
             .Label("会社")
             .Input("CompanyId")
             .FromMaster("Company")
+            .AllowReverseReflect()
             .OpenDialog("/Report/CompanyDialog")
             .TemplateKey("Company.CompanyName");
 
@@ -32,6 +33,7 @@ public class UserFavoriteReportDefinition : ReportDefinition<User>
             .Label("好きなもの")
             .Input("FavoriteNames")
             .AsCollection()
+            .AllowReverseReflect()
             .ResolveWith<FavoriteResolver>()
             .TemplateKey("Favorite.FavoriteName")
             .JoinWith("、");

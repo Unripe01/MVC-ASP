@@ -39,20 +39,30 @@ public class UserService
     }
 
     /// <summary>
-    /// 帳票入力値を保存せずにプレビュー用Entityグラフへ変換する。
+    /// POST入力をマスター非依存の帳票用Entityグラフへ変換する。
     /// </summary>
-    public User BuildTransientUser(UserFavoriteReportPostViewModel input)
+    public User BuildReportUser(UserFavoriteReportPostViewModel input)
     {
-        var company = _companyRepository.Get(input.CompanyId);
-
         return new User
         {
             Id = input.UserId,
             CompanyId = input.CompanyId,
             UserName = input.UserName ?? "",
-            Company = company,
-            Favorites = BuildFavorites(input.UserId, input.FavoriteNames)
+            Company = new Company
+            {
+                Id = input.CompanyId,
+                CompanyName = input.CompanyName ?? ""
+            },
+            Favorites = BuildFavorites(input.UserId, input.FavoriteIds, input.FavoriteNames)
         };
+    }
+
+    /// <summary>
+    /// 帳票入力値を保存せずにプレビュー用Entityグラフへ変換する。
+    /// </summary>
+    public User BuildTransientUser(UserFavoriteReportPostViewModel input)
+    {
+        return BuildReportUser(input);
     }
 
     /// <summary>
@@ -80,15 +90,87 @@ public class UserService
         return GetUserGraph(user.Id) ?? user;
     }
 
+    /// <summary>
+    /// 選択された項目だけをマスターへ逆反映し、反映後のUserグラフを返す。
+    /// </summary>
+    public User ReverseReflect(User reportUser, IReadOnlySet<string> selectedFieldIds)
+    {
+        var currentMasterUser = reportUser.Id == 0 ? null : _userRepository.Get(reportUser.Id);
+        var shouldReflectUserName = selectedFieldIds.Contains("UserName");
+        var shouldReflectCompany = selectedFieldIds.Contains("Company_CompanyName");
+        var shouldReflectFavorites = selectedFieldIds.Contains("Favorites");
+
+        if (!shouldReflectUserName && !shouldReflectCompany && !shouldReflectFavorites)
+        {
+            return NormalizeReportUser(reportUser);
+        }
+
+        var userToSave = new User
+        {
+            Id = currentMasterUser?.Id ?? reportUser.Id,
+            CompanyId = currentMasterUser?.CompanyId ?? reportUser.CompanyId,
+            UserName = currentMasterUser?.UserName ?? reportUser.UserName
+        };
+
+        if (shouldReflectUserName)
+        {
+            userToSave.UserName = (reportUser.UserName ?? "").Trim();
+        }
+
+        if (shouldReflectCompany)
+        {
+            userToSave.CompanyId = reportUser.CompanyId;
+        }
+
+        if (userToSave.Id == 0)
+        {
+            _userRepository.Add(userToSave);
+        }
+        else
+        {
+            _userRepository.Update(userToSave);
+        }
+
+        if (shouldReflectFavorites)
+        {
+            _favoriteRepository.ReplaceForUser(userToSave.Id, reportUser.Favorites.Select(favorite => new Favorite
+            {
+                UserId = userToSave.Id,
+                FavoriteName = favorite.FavoriteName
+            }));
+        }
+
+        return GetUserGraph(userToSave.Id) ?? NormalizeReportUser(reportUser);
+    }
+
+    /// <summary>
+    /// XML deserialize後や空画面でも安全に扱えるUserグラフへ整形する。
+    /// </summary>
+    public static User NormalizeReportUser(User user)
+    {
+        user.Company ??= new Company();
+        user.Favorites ??= [];
+        return user;
+    }
+
     private static List<Favorite> BuildFavorites(int userId, IEnumerable<string> favoriteNames)
     {
-        return favoriteNames
-            .Where(favoriteName => !string.IsNullOrWhiteSpace(favoriteName))
-            .Select(favoriteName => new Favorite
+        return BuildFavorites(userId, Enumerable.Repeat(0, favoriteNames.Count()), favoriteNames);
+    }
+
+    private static List<Favorite> BuildFavorites(int userId, IEnumerable<int> favoriteIds, IEnumerable<string> favoriteNames)
+    {
+        var favoriteIdList = favoriteIds.ToList();
+        var favoriteNameList = favoriteNames.ToList();
+
+        return favoriteNameList
+            .Select((favoriteName, index) => new Favorite
             {
+                Id = index < favoriteIdList.Count ? favoriteIdList[index] : 0,
                 UserId = userId,
-                FavoriteName = favoriteName.Trim()
+                FavoriteName = (favoriteName ?? "").Trim()
             })
+            .Where(favorite => !string.IsNullOrWhiteSpace(favorite.FavoriteName))
             .ToList();
     }
 }

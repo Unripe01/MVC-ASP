@@ -15,17 +15,21 @@ public class ReportRendererService
     public IReadOnlyList<ReportFieldInputViewModel> BuildFields(
         UserFavoriteReportDefinition definition,
         User user,
-        IReadOnlyList<Company> companies)
+        IReadOnlyList<Company> companies,
+        IReadOnlySet<string>? selectedFieldIds = null)
     {
+        var selectedFields = selectedFieldIds ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         return definition.Fields
-            .Select(field => BuildField(field, user, companies))
+            .Select(field => BuildField(field, user, companies, selectedFields))
             .ToList();
     }
 
     private static ReportFieldInputViewModel BuildField(
         FieldDefinition field,
         User user,
-        IReadOnlyList<Company> companies)
+        IReadOnlyList<Company> companies,
+        IReadOnlySet<string> selectedFieldIds)
     {
         return new ReportFieldInputViewModel
         {
@@ -34,13 +38,26 @@ public class ReportRendererService
             Label = field.DisplayLabel,
             InputName = field.InputName,
             Value = field.ReadTextValue(user),
+            HiddenValue = field.ReadTextValue(user),
             Values = field.ReadCollectionValues(user),
+            ValueIds = BuildValueIds(field, user),
             Options = BuildOptions(field, user, companies),
             IsCollection = field.IsCollection,
             IsFromMaster = field.IsFromMaster,
             AllowReverseReflection = field.AllowReverseReflection,
+            IsSelected = selectedFieldIds.Contains(field.FieldId),
             DialogUrl = field.DialogUrl
         };
+    }
+
+    private static IReadOnlyList<int> BuildValueIds(FieldDefinition field, User user)
+    {
+        if (!field.IsCollection || field.PropertyPath != "Favorites")
+        {
+            return [];
+        }
+
+        return user.Favorites.Select(favorite => favorite.Id).ToList();
     }
 
     private static IReadOnlyList<ReportSelectOptionViewModel> BuildOptions(
