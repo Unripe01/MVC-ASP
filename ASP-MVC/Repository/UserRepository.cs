@@ -26,6 +26,10 @@ public class UserRepository
                 u.Id,
                 u.CompanyId,
                 u.UserName,
+                u.Nationality,
+                u.Age,
+                u.BloodType,
+                u.Birthday,
                 c.Id AS CompanyRecordId,
                 c.CompanyName
             FROM Users u
@@ -47,6 +51,10 @@ public class UserRepository
                 u.Id,
                 u.CompanyId,
                 u.UserName,
+                u.Nationality,
+                u.Age,
+                u.BloodType,
+                u.Birthday,
                 c.Id AS CompanyRecordId,
                 c.CompanyName
             FROM Users u
@@ -68,14 +76,18 @@ public class UserRepository
         var userName = (user.UserName ?? "").Trim();
 
         const string sql = @"
-            INSERT INTO Users (CompanyId, UserName)
-            VALUES (@CompanyId, @UserName)
+            INSERT INTO Users (CompanyId, UserName, Nationality, Age, BloodType, Birthday)
+            VALUES (@CompanyId, @UserName, @Nationality, @Age, @BloodType, @Birthday)
             RETURNING Id;";
 
         user.Id = _connection.ExecuteScalar<int>(sql, new
         {
             CompanyId = companyId,
-            UserName = userName
+            UserName = userName,
+            Nationality = (user.Nationality ?? "").Trim(),
+            Age = (user.Age ?? "").Trim(),
+            BloodType = (user.BloodType ?? "").Trim(),
+            Birthday = (user.Birthday ?? "").Trim()
         });
         user.CompanyId = companyId;
         user.UserName = userName;
@@ -91,14 +103,22 @@ public class UserRepository
         const string sql = @"
             UPDATE Users
             SET CompanyId = @CompanyId,
-                UserName = @UserName
+                UserName = @UserName,
+                Nationality = @Nationality,
+                Age = @Age,
+                BloodType = @BloodType,
+                Birthday = @Birthday
             WHERE Id = @Id;";
 
         _connection.Execute(sql, new
         {
             user.Id,
             user.CompanyId,
-            UserName = (user.UserName ?? "").Trim()
+            UserName = (user.UserName ?? "").Trim(),
+            Nationality = (user.Nationality ?? "").Trim(),
+            Age = (user.Age ?? "").Trim(),
+            BloodType = (user.BloodType ?? "").Trim(),
+            Birthday = (user.Birthday ?? "").Trim()
         });
     }
 
@@ -132,6 +152,10 @@ public class UserRepository
             Id = row.Id,
             CompanyId = row.CompanyId,
             UserName = row.UserName,
+            Nationality = row.Nationality,
+            Age = row.Age,
+            BloodType = row.BloodType,
+            Birthday = row.Birthday,
             Company = row.CompanyRecordId is null
                 ? null
                 : new Company
@@ -149,6 +173,14 @@ public class UserRepository
         public int CompanyId { get; set; }
 
         public string UserName { get; set; } = "";
+
+        public string Nationality { get; set; } = "";
+
+        public string Age { get; set; } = "";
+
+        public string BloodType { get; set; } = "";
+
+        public string Birthday { get; set; } = "";
 
         public int? CompanyRecordId { get; set; }
 

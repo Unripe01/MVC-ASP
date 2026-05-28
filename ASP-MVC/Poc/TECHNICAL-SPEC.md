@@ -423,9 +423,13 @@ CompanyName TEXT NOT NULL
 Id INTEGER PRIMARY KEY AUTOINCREMENT
 CompanyId INTEGER NOT NULL
 UserName TEXT NOT NULL
+Nationality TEXT NOT NULL DEFAULT ''
+Age TEXT NOT NULL DEFAULT ''
+BloodType TEXT NOT NULL DEFAULT ''
+Birthday TEXT NOT NULL DEFAULT ''
 ```
 
-旧ハンズオン由来の `Name` カラムが存在する場合は、起動時初期化で `Users` テーブルを新スキーマへ再構築し、`Name` の値を `UserName` へ移行する。
+旧ハンズオン由来の `Name` カラムが存在する場合は、起動時初期化で `Users` テーブルを新スキーマへ再構築し、`Name` の値を `UserName` へ移行する。`Nationality` / `Age` / `BloodType` / `Birthday` が存在しない既存DBでは、起動時に空文字の列を追加する。
 
 ### `Favorites`
 

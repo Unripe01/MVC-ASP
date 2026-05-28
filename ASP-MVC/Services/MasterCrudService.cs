@@ -105,7 +105,11 @@ public class MasterCrudService
         {
             Id = input.Id,
             CompanyId = input.CompanyId,
-            UserName = normalizedName
+            UserName = normalizedName,
+            Nationality = (input.Nationality ?? "").Trim(),
+            Age = (input.Age ?? "").Trim(),
+            BloodType = (input.BloodType ?? "").Trim(),
+            Birthday = (input.Birthday ?? "").Trim()
         };
 
         if (input.Id == 0)
@@ -231,7 +235,11 @@ public class MasterCrudService
         {
             Id = user.Id,
             CompanyId = user.CompanyId,
-            UserName = user.UserName
+            UserName = user.UserName,
+            Nationality = user.Nationality,
+            Age = user.Age,
+            BloodType = user.BloodType,
+            Birthday = user.Birthday
         };
     }
 

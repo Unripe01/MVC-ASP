@@ -101,10 +101,14 @@ public class UserService
     {
         var currentMasterUser = reportUser.Id == 0 ? null : _userRepository.Get(reportUser.Id);
         var shouldReflectUserName = selectedFieldIds.Contains("UserName");
+        var shouldReflectNationality = selectedFieldIds.Contains("Nationality");
+        var shouldReflectAge = selectedFieldIds.Contains("Age");
+        var shouldReflectBloodType = selectedFieldIds.Contains("BloodType");
+        var shouldReflectBirthday = selectedFieldIds.Contains("Birthday");
         var shouldReflectCompany = selectedFieldIds.Contains("Company_CompanyName");
         var shouldReflectFavorites = selectedFieldIds.Contains("Favorites");
 
-        if (!shouldReflectUserName && !shouldReflectCompany && !shouldReflectFavorites)
+        if (!shouldReflectUserName && !shouldReflectNationality && !shouldReflectAge && !shouldReflectBloodType && !shouldReflectBirthday && !shouldReflectCompany && !shouldReflectFavorites)
         {
             return NormalizeReportUser(reportUser);
         }
@@ -113,7 +117,11 @@ public class UserService
         {
             Id = currentMasterUser?.Id ?? reportUser.Id,
             CompanyId = currentMasterUser?.CompanyId ?? reportUser.CompanyId,
-            UserName = currentMasterUser?.UserName ?? reportUser.UserName
+            UserName = currentMasterUser?.UserName ?? reportUser.UserName,
+            Nationality = currentMasterUser?.Nationality ?? reportUser.Nationality,
+            Age = currentMasterUser?.Age ?? reportUser.Age,
+            BloodType = currentMasterUser?.BloodType ?? reportUser.BloodType,
+            Birthday = currentMasterUser?.Birthday ?? reportUser.Birthday
         };
 
         if (shouldReflectUserName)
@@ -124,6 +132,26 @@ public class UserService
         if (shouldReflectCompany)
         {
             userToSave.CompanyId = reportUser.CompanyId;
+        }
+
+        if (shouldReflectNationality)
+        {
+            userToSave.Nationality = (reportUser.Nationality ?? "").Trim();
+        }
+
+        if (shouldReflectAge)
+        {
+            userToSave.Age = (reportUser.Age ?? "").Trim();
+        }
+
+        if (shouldReflectBloodType)
+        {
+            userToSave.BloodType = (reportUser.BloodType ?? "").Trim();
+        }
+
+        if (shouldReflectBirthday)
+        {
+            userToSave.Birthday = (reportUser.Birthday ?? "").Trim();
         }
 
         if (userToSave.Id == 0)

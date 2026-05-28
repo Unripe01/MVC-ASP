@@ -39,6 +39,28 @@
                     <span asp-validation-for="Input.CompanyId" class="text-danger"></span>
                 </div>
 
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Input.Nationality" class="form-label">国籍</label>
+                        <input asp-for="Input.Nationality" class="form-control" autocomplete="off" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Input.Age" class="form-label">年齢</label>
+                        <input asp-for="Input.Age" class="form-control" autocomplete="off" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Input.BloodType" class="form-label">血液型</label>
+                        <input asp-for="Input.BloodType" class="form-control" autocomplete="off" />
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Input.Birthday" class="form-label">生年月日</label>
+                        <input asp-for="Input.Birthday" class="form-control" autocomplete="off" />
+                    </div>
+                </div>
+
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">保存</button>
                     <a asp-action="Users" class="btn btn-outline-secondary">クリア</a>
@@ -57,6 +79,10 @@
                         <th>ID</th>
                         <th>ユーザー名</th>
                         <th>会社</th>
+                        <th>国籍</th>
+                        <th>年齢</th>
+                        <th>血液型</th>
+                        <th>生年月日</th>
                         <th class="text-end">操作</th>
                     </tr>
                 </thead>
@@ -67,6 +93,10 @@
                         <td>@user.Id</td>
                         <td>@user.UserName</td>
                         <td>@(user.Company?.CompanyName ?? "")</td>
+                        <td>@user.Nationality</td>
+                        <td>@user.Age</td>
+                        <td>@user.BloodType</td>
+                        <td>@user.Birthday</td>
                         <td class="text-end">
                             <a asp-controller="Report" asp-action="Index" asp-route-userId="@user.Id" class="btn btn-sm btn-outline-dark">帳票登録</a>
                             <a asp-action="Users" asp-route-editId="@user.Id" class="btn btn-sm btn-outline-primary">編集</a>

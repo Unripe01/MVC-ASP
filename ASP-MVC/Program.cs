@@ -102,7 +102,11 @@ static void EnsureUsersTable(IDbConnection connection)
             CREATE TABLE Users (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 CompanyId INTEGER NOT NULL,
-                UserName TEXT NOT NULL
+                UserName TEXT NOT NULL,
+                Nationality TEXT NOT NULL DEFAULT '',
+                Age TEXT NOT NULL DEFAULT '',
+                BloodType TEXT NOT NULL DEFAULT '',
+                Birthday TEXT NOT NULL DEFAULT ''
             );
         ");
         return;
@@ -111,7 +115,14 @@ static void EnsureUsersTable(IDbConnection connection)
     if (userColumns.Contains("Name") || !userColumns.Contains("CompanyId") || !userColumns.Contains("UserName"))
     {
         RebuildUsersTable(connection, userColumns);
+        userColumns = connection.Query<string>("SELECT name FROM pragma_table_info('Users');")
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
+
+    EnsureUsersColumn(connection, userColumns, "Nationality");
+    EnsureUsersColumn(connection, userColumns, "Age");
+    EnsureUsersColumn(connection, userColumns, "BloodType");
+    EnsureUsersColumn(connection, userColumns, "Birthday");
 }
 
 static void RebuildUsersTable(IDbConnection connection, IReadOnlySet<string> userColumns)
@@ -127,24 +138,54 @@ static void RebuildUsersTable(IDbConnection connection, IReadOnlySet<string> use
         (false, true) => "COALESCE(Name, '')",
         _ => "''"
     };
+    var nationalityExpression = ToTextColumnExpression(userColumns, "Nationality");
+    var ageExpression = ToTextColumnExpression(userColumns, "Age");
+    var bloodTypeExpression = ToTextColumnExpression(userColumns, "BloodType");
+    var birthdayExpression = ToTextColumnExpression(userColumns, "Birthday");
 
     connection.Execute("DROP TABLE IF EXISTS Users_Migrated;");
     connection.Execute(@"
         CREATE TABLE Users_Migrated (
             Id INTEGER PRIMARY KEY AUTOINCREMENT,
             CompanyId INTEGER NOT NULL,
-            UserName TEXT NOT NULL
+            UserName TEXT NOT NULL,
+            Nationality TEXT NOT NULL DEFAULT '',
+            Age TEXT NOT NULL DEFAULT '',
+            BloodType TEXT NOT NULL DEFAULT '',
+            Birthday TEXT NOT NULL DEFAULT ''
         );
     ");
 
     connection.Execute($@"
-        INSERT INTO Users_Migrated (Id, CompanyId, UserName)
-        SELECT Id, {companyIdExpression}, {userNameExpression}
+        INSERT INTO Users_Migrated (Id, CompanyId, UserName, Nationality, Age, BloodType, Birthday)
+        SELECT Id,
+               {companyIdExpression},
+               {userNameExpression},
+             {nationalityExpression},
+             {ageExpression},
+             {bloodTypeExpression},
+             {birthdayExpression}
         FROM Users;
     ");
 
     connection.Execute("DROP TABLE Users;");
     connection.Execute("ALTER TABLE Users_Migrated RENAME TO Users;");
+}
+
+static void EnsureUsersColumn(IDbConnection connection, ISet<string> userColumns, string columnName)
+{
+    if (userColumns.Contains(columnName))
+    {
+        return;
+    }
+
+    connection.Execute($"ALTER TABLE Users ADD COLUMN {columnName} TEXT NOT NULL DEFAULT '';");
+    userColumns.Add(columnName);
+}
+
+static string ToTextColumnExpression(IReadOnlySet<string> columns, string columnName)
+{
+    return columns.Contains(columnName) ? $"COALESCE({columnName}, '')" : "''";
 }
 
 static void EnsureReportInstancesTable(IDbConnection connection)
@@ -173,9 +214,17 @@ static void SeedDatabase(IDbConnection connection)
 
     var userId = connection.ExecuteScalar<int?>("SELECT Id FROM Users ORDER BY Id LIMIT 1;")
         ?? connection.ExecuteScalar<int>(@"
-            INSERT INTO Users (CompanyId, UserName)
-            VALUES (@CompanyId, @UserName)
-            RETURNING Id;", new { CompanyId = companyId, UserName = "山田 太郎" });
+            INSERT INTO Users (CompanyId, UserName, Nationality, Age, BloodType, Birthday)
+            VALUES (@CompanyId, @UserName, @Nationality, @Age, @BloodType, @Birthday)
+            RETURNING Id;", new
+        {
+            CompanyId = companyId,
+            UserName = "山田 太郎",
+            Nationality = "",
+            Age = "",
+            BloodType = "",
+            Birthday = ""
+        });
 
     var favoriteCount = connection.ExecuteScalar<int>(
         "SELECT COUNT(*) FROM Favorites WHERE UserId = @UserId;",
